@@ -1,0 +1,7 @@
+#!/bin/sh
+export PYTRAIN_PLATFORM=steamdeck
+export PYTHONUNBUFFERED=1
+
+unset LD_PRELOAD
+
+exec /app/bin/pytrain -headless -client -buttons /app/share/pycab/buttons.py "$@"
