@@ -1,0 +1,31 @@
+# Exact Python environment validated in PyCab v2.12.0 on Steam Deck.
+# Regenerate deliberately with ./update-lock.sh <PyTrain-version>.
+cbor2==6.1.5
+certifi==2026.7.22
+charset-normalizer==3.5.2
+colorzero==2.0
+gpiozero==2.0.1.post3
+guizero==1.6.0
+idna==3.20
+ifaddr==0.2.0
+luma.core==2.6.0
+luma.oled==3.16.0
+packaging==26.3
+pillow==12.3.0
+psutil==7.2.2
+pygame-ce==2.5.8
+pyserial==3.5
+python-dotenv==1.2.4
+pytrain-ogr-deck==2.12.0
+range-key-dict==1.1.0
+requests==2.34.2
+RPLCD==1.4.0
+setuptools==84.0.0
+setuptools-scm==10.3.4
+smbus2==0.6.1
+sortedcontainers==2.4.0
+sortedcontainers-stubs==2.4.3
+typing_extensions==4.16.0
+urllib3==2.8.0
+vcs-versioning==2.6.0
+zeroconf==0.151.5
