@@ -22,6 +22,24 @@ jobs:
           sed -i -E "s/(pytrain-ogr-deck==)[0-9]+\.[0-9]+\.[0-9]+/\1$VERSION/" io.github.cdswindell.PyCab.yml
           grep "pytrain-ogr-deck==" io.github.cdswindell.PyCab.yml
 
+      - name: Verify PyPI package
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PACKAGE_URL="https://pypi.org/pypi/pytrain-ogr-deck/$VERSION/json"
+          echo "Checking pytrain-ogr-deck==$VERSION on PyPI..."
+          for attempt in {1..12}; do
+            if curl --fail --silent --show-error "$PACKAGE_URL" >/dev/null; then
+              echo "pytrain-ogr-deck==$VERSION is available on PyPI."
+              exit 0
+            fi
+            if [[ $attempt -lt 12 ]]; then
+              echo "Not available yet; retrying in 10 seconds ($attempt/12)..."
+              sleep 10
+            fi
+          done
+          echo "::error::pytrain-ogr-deck==$VERSION is not available on PyPI."
+          exit 1
+
       - name: Install Flatpak
         run: |
           sudo apt-get update
