@@ -19,16 +19,25 @@ flatpak install --user flathub org.flatpak.Builder
 
 ## Install
 
+For normal installations, clone this small packaging repository and run the
+installer:
+
 ```bash
 git clone https://github.com/cdswindell/PyCab-Flatpak.git
 cd PyCab-Flatpak
 bash install.sh
 ```
 
-The installer builds and installs the Flatpak for your user and installs
-`~/.local/bin/pycab-steam`, the host-side Steam launcher. Tcl, Tk, and
-Python are compiled inside the Flatpak build; the first build may take time.
-You do not need a host Python environment or a PyLegacy checkout.
+The installer downloads the latest prebuilt `PyCab.flatpak` from GitHub
+Releases, installs it for the current user, and installs the host-side Steam
+launcher at `~/.local/bin/pycab-steam`. The Deck does **not** compile Tcl,
+Tk, Python, or PyTrain during a normal install.
+
+Developers can still force the validated local source build:
+
+```bash
+bash install.sh --build
+```
 
 Test in Desktop Mode:
 
@@ -64,8 +73,7 @@ git pull
 bash install.sh
 ```
 
-The installer reinstalls the user Flatpak and refreshes the Steam launcher.
-Existing Steam shortcuts continue pointing to the same launcher path.
+The installer downloads the newest published bundle, updates the user Flatpak, and refreshes the Steam launcher. Existing Steam shortcuts continue pointing to the same launcher path.
 
 ## Uninstall / clean-install test
 
@@ -94,14 +102,33 @@ For a clean-install test, run `bash install.sh` again, recreate the Steam
 shortcut, enable Steam Input, and test in Gaming Mode. Avoid deleting app data
 until you've decided whether you want to preserve configuration.
 
+## Creating a release
+
+Release bundles are built by GitHub Actions. Push a version tag such as:
+
+```bash
+git tag v2.12.0
+git push origin v2.12.0
+```
+
+The release workflow builds `dist/PyCab.flatpak`, generates
+`PyCab.flatpak.sha256`, and attaches both files to the GitHub Release. Normal
+installations then consume that prebuilt bundle.
+
+A local release bundle can also be produced with:
+
+```bash
+bash build-release.sh
+```
+
 ## Packaging notes
 
-The Flatpak currently allows network access during its build to resolve
-Python dependencies from PyPI. The top-level package is pinned to
-`pytrain-ogr-deck==2.12.0`, **but transitive dependencies are not yet
-hash-locked**. This is a working repeatable source-build installer, not yet a
-fully offline/reproducible binary distribution. The next packaging milestone
-is a complete platform-specific wheel lock and prebuilt Flatpak bundle.
+The release bundle means an end user's Deck no longer resolves PyPI
+dependencies or compiles Tcl/Tk/Python. The bundle itself is still produced
+from a manifest whose Python dependency resolution occurs at build time.
+`pytrain-ogr-deck` is pinned to 2.12.0, but transitive Python dependencies
+are not yet hash-locked. Hash-locking those inputs remains the next
+reproducibility improvement.
 
 The Flatpak intentionally grants broad device access: pygame/SDL reads the
 Steam virtual controller while PyCab also uses `/dev/hidraw*` for
