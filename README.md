@@ -1,64 +1,108 @@
 # PyCab Flatpak
 
-Flatpak packaging for the PyTrain Steam Deck controller (PyCab).
+Steam Deck Flatpak packaging for PyCab, the PyTrain controller. The Flatpak
+installs the `pytrain-ogr-deck` Python distribution rather than building
+PyLegacy source. The currently tested PyTrain release is **2.12.0**.
 
-PyCab itself is distributed by the `pytrain-ogr-deck` package on PyPI. This
-repository contains only the Flatpak packaging needed to run that package on
-SteamOS without modifying the immutable host operating system.
+## Requirements
 
-## Build on Steam Deck
+- Steam Deck in Desktop Mode with internet access.
+- Flatpak and Git (provided by SteamOS).
+- Flatpak Builder from Flathub.
+- Access to your PyTrain server on the network.
+
+Install Builder once, if needed:
+
+```bash
+flatpak install --user flathub org.flatpak.Builder
+```
+
+## Install
 
 ```bash
 git clone https://github.com/cdswindell/PyCab-Flatpak.git
 cd PyCab-Flatpak
-
-flatpak run org.flatpak.Builder \
-    --user \
-    --install \
-    --force-clean \
-    build-dir \
-    io.github.cdswindell.PyCab.yml
+bash install.sh
 ```
 
-Run from Steam Deck Desktop Mode:
+The installer builds and installs the Flatpak for your user and installs
+`~/.local/bin/pycab-steam`, the host-side Steam launcher. Tcl, Tk, and
+Python are compiled inside the Flatpak build; the first build may take time.
+You do not need a host Python environment or a PyLegacy checkout.
+
+Test in Desktop Mode:
 
 ```bash
 flatpak run io.github.cdswindell.PyCab
 ```
 
-## Add PyCab to Steam
+### Add to Steam
 
-SteamOS currently behaves differently when Steam launches the Flatpak command
-directly: PyCab can open as a white window even though the same Flatpak runs
-normally from a terminal. Use the host-side `pycab-steam` wrapper when adding
-PyCab as a non-Steam game.
-
-Install the wrapper:
-
-```bash
-install -Dm755 pycab-steam ~/.local/bin/pycab-steam
-```
-
-In Steam choose **Games -> Add a Non-Steam Game to My Library**, then configure
-the PyCab shortcut as:
+In Desktop Mode, choose **Steam > Games > Add a Non-Steam Game to My Library**.
+Add a shortcut for PyCab (you may add any executable initially) and set its
+Properties > Shortcut fields to:
 
 ```text
+Name:           PyCab
 Target:         /home/deck/.local/bin/pycab-steam
 Start In:       /home/deck/
-Launch Options:
+Launch Options: (empty)
 ```
 
-Under **Properties -> Controller**, set **Override for PyCab** to
-**Enable Steam Input**.
+Under **Properties > Controller**, set **Override for PyCab** to
+**Enable Steam Input**. Launch from Steam Desktop Mode, then Gaming Mode.
 
-With Steam Input enabled, pygame/SDL receives the Steam Deck controls through
-Steam's normalized game controller while PyCab can continue reading Deck-specific
-controls such as the trackpads through `/dev/hidraw*`.
+**Important:** Do not use `/usr/bin/flatpak` directly as the Steam shortcut
+target. On the tested Deck, that launch path produced a white Tk window. The
+host-side shell launcher is the verified workaround.
 
-The prototype deliberately retains broad device access because PyCab uses both
-SDL/pygame controller input and direct `/dev/hidraw*` access for Steam Deck
-controls.
+## Update
 
-The build currently allows network access while pip installs
-`pytrain-ogr-deck` from PyPI. A production/distributable manifest should
-replace this with fixed wheel URLs and SHA-256 hashes.
+```bash
+cd ~/PyCab-Flatpak
+git pull
+bash install.sh
+```
+
+The installer reinstalls the user Flatpak and refreshes the Steam launcher.
+Existing Steam shortcuts continue pointing to the same launcher path.
+
+## Uninstall / clean-install test
+
+First, in Steam Desktop Mode, remove the **PyCab** non-Steam shortcut from
+your library. This is a Steam library action, not a Flatpak operation.
+
+From the PyCab-Flatpak checkout:
+
+```bash
+bash uninstall.sh
+```
+
+This uninstalls only the **user** installation of
+`io.github.cdswindell.PyCab` and removes
+`~/.local/bin/pycab-steam`. It does not delete application data or remove
+Flatpak Builder, SDKs, runtimes, source files, or any old PyLegacy environment.
+
+Verify removal:
+
+```bash
+flatpak list --app --user | grep io.github.cdswindell.PyCab || echo "PyCab is not installed"
+test ! -e ~/.local/bin/pycab-steam && echo "Steam launcher removed"
+```
+
+For a clean-install test, run `bash install.sh` again, recreate the Steam
+shortcut, enable Steam Input, and test in Gaming Mode. Avoid deleting app data
+until you've decided whether you want to preserve configuration.
+
+## Packaging notes
+
+The Flatpak currently allows network access during its build to resolve
+Python dependencies from PyPI. The top-level package is pinned to
+`pytrain-ogr-deck==2.12.0`, **but transitive dependencies are not yet
+hash-locked**. This is a working repeatable source-build installer, not yet a
+fully offline/reproducible binary distribution. The next packaging milestone
+is a complete platform-specific wheel lock and prebuilt Flatpak bundle.
+
+The Flatpak intentionally grants broad device access: pygame/SDL reads the
+Steam virtual controller while PyCab also uses `/dev/hidraw*` for
+Steam Deck-specific controls.
