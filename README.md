@@ -133,3 +133,27 @@ reproducibility improvement.
 The Flatpak intentionally grants broad device access: pygame/SDL reads the
 Steam virtual controller while PyCab also uses `/dev/hidraw*` for
 Steam Deck-specific controls.
+
+
+## Locked Python dependencies
+
+`requirements-lock.txt` is the exact Python environment installed in the released Flatpak. PyLegacy's `pyproject.toml` remains the source of truth for the dependency ranges supported by PyTrain; this lock records the exact versions selected and tested for PyCab.
+
+For a new PyTrain release, publish `pytrain-ogr-deck` to PyPI first, then deliberately regenerate the lock:
+
+```bash
+./update-lock.sh 2.12.1
+git diff requirements-lock.txt
+```
+
+Build and test the resulting PyCab Flatpak before committing the new lock. Once validated:
+
+```bash
+git add requirements-lock.txt
+git commit -m "Lock PyCab dependencies for PyTrain 2.12.1"
+git push
+git tag v2.12.1
+git push origin v2.12.1
+```
+
+The release workflow refuses to build when the release tag and the locked `pytrain-ogr-deck` version differ, and it verifies that the exact PyTrain version is available on PyPI before starting the Flatpak build.
