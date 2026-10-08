@@ -1,0 +1,5 @@
+#!/bin/sh
+# Host-side launcher for starting PyCab from Steam.
+# Steam launching Flatpak directly can leave the Tk window white-screened;
+# starting Flatpak through a host shell avoids that launch-path problem.
+exec /usr/bin/flatpak run io.github.cdswindell.PyCab "$@"
