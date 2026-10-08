@@ -64,7 +64,7 @@ modules:
       build-args:
         - --share=network
     build-commands:
-      - /app/bin/python3 -m pip install --prefix=/app --no-cache-dir pytrain-ogr-deck
+      - /app/bin/python3 -m pip install --prefix=/app --no-cache-dir pytrain-ogr-deck==2.12.0
       - /app/bin/python3 -c "from importlib.metadata import version; print('PyCab PyTrain version:', version('pytrain-ogr-deck'))"
       - install -Dm755 pycab-flatpak /app/bin/pycab-flatpak
       - install -Dm644 buttons.py /app/share/pycab/buttons.py
