@@ -15,21 +15,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set PyTrain version from release tag
+      - name: Validate release lock and PyPI package
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          echo "Building PyCab with pytrain-ogr-deck==$VERSION"
-          sed -i -E "s/(pytrain-ogr-deck==)[0-9]+\.[0-9]+\.[0-9]+/\1$VERSION/" io.github.cdswindell.PyCab.yml
-          grep "pytrain-ogr-deck==" io.github.cdswindell.PyCab.yml
-
-      - name: Verify PyPI package
-        run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          LOCKED_VERSION="$(sed -n 's/^pytrain-ogr-deck==//p' requirements-lock.txt)"
+          if [[ -z "$LOCKED_VERSION" ]]; then
+            echo "::error::requirements-lock.txt does not contain pytrain-ogr-deck."
+            exit 1
+          fi
+          if [[ "$LOCKED_VERSION" != "$VERSION" ]]; then
+            echo "::error::Release tag v$VERSION does not match locked pytrain-ogr-deck==$LOCKED_VERSION."
+            echo "::error::Run ./update-lock.sh $VERSION, test the resulting Flatpak, commit the lock, then tag the release."
+            exit 1
+          fi
           PACKAGE_URL="https://pypi.org/pypi/pytrain-ogr-deck/$VERSION/json"
           echo "Checking pytrain-ogr-deck==$VERSION on PyPI..."
           for attempt in {1..12}; do
             if curl --fail --silent --show-error "$PACKAGE_URL" >/dev/null; then
-              echo "pytrain-ogr-deck==$VERSION is available on PyPI."
+              echo "Lock matches tag and pytrain-ogr-deck==$VERSION is available on PyPI."
               exit 0
             fi
             if [[ $attempt -lt 12 ]]; then
