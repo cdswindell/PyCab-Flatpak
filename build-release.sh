@@ -10,7 +10,13 @@ cd "$ROOT"
 rm -rf "$REPO" "$DIST"
 mkdir -p "$DIST"
 
-flatpak run org.flatpak.Builder \
+if command -v flatpak-builder >/dev/null 2>&1; then
+  BUILDER=(flatpak-builder)
+else
+  BUILDER=(flatpak run org.flatpak.Builder)
+fi
+
+"${BUILDER[@]}" \
   --force-clean \
   --repo="$REPO" \
   build-dir \
