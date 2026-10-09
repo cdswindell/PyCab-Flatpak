@@ -127,17 +127,17 @@ One PyCab installation supports both operating modes. In Steam Desktop Mode, ope
 | Launch Options | Behavior |
 | --- | --- |
 | *(empty)* | Existing client mode; connects to a separate PyTrain server. |
-| `--base3` | Server mode; PyTrain discovers the Base 3 automatically. |
-| `--base3 192.168.4.100` | Server mode; PyTrain uses the specified Base 3 address (replace with yours). |
+| `-base` | Server mode; PyTrain discovers the Base 3 automatically. |
+| `-base 192.168.4.100` | Server mode; PyTrain uses the specified Base 3 address (replace with yours). |
 
-Under the hood, the launcher maps these to PyTrain's `-client`, `-base`, and `-base <ip>` flags. **Do not enter `-base` directly as a Steam option**; use the documented `--base3` form.
+The launcher passes PyTrain's native `-base` option (with an optional IP address) for server mode, or uses `-client` when no `-base` option is supplied.
 
 For command-line testing:
 
 ```bash
 flatpak run io.github.cdswindell.PyCab
-flatpak run io.github.cdswindell.PyCab --base3
-flatpak run io.github.cdswindell.PyCab --base3 192.168.4.100
+flatpak run io.github.cdswindell.PyCab -base
+flatpak run io.github.cdswindell.PyCab -base 192.168.4.100
 ```
 
 Server mode requires a reachable Base 3 and network discovery must work for the automatic option. This new launch-mode behavior must be tested in a newly built Flatpak; existing published bundles do not contain it.
@@ -168,7 +168,7 @@ This downloads and installs the latest prebuilt release and refreshes the launch
 - **`git clone` says directory already exists:** run `cd ~/PyCab-Flatpak && git pull`, then `bash install.sh`.
 - **Release download fails (HTTP 404):** confirm a published GitHub Release has a `PyCab.flatpak` asset. Repository commits or tags alone do not guarantee a finished bundle.
 - **`flatpak` cannot find a runtime:** check `flatpak remotes`, add Flathub as shown above, and retry.
-- **GUI works in Konsole but is white in Steam:** verify the Steam shortcut **Target** is `/home/deck/.local/bin/pycab-steam`, **Start In** is `/home/deck/`, and launch options are empty.
+- **GUI works in Konsole but is white in Steam:** verify the Steam shortcut **Target** is `/home/deck/.local/bin/pycab-steam`, **Start In** is `/home/deck/`, and launch options match your chosen mode.
 - **Buttons do not respond:** enable **Steam Input** under the game's Controller override, then relaunch.
 - **Cannot connect to the server:** verify the PyTrain server is running and that Deck/server devices can reach each other on the network. Try a direct connection if discovery is blocked by Wi-Fi isolation.
 - **SSH connection refused:** check `systemctl is-active sshd` on the Deck and confirm the Deck's current IP address and network reachability.
