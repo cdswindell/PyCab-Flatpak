@@ -66,6 +66,27 @@ modules:
     build-commands:
       - /app/bin/python3 -m pip install --prefix=/app --no-cache-dir --no-deps -r requirements-lock.txt
       - /app/bin/python3 -c "from importlib.metadata import version; print('PyCab PyTrain version:', version('pytrain-ogr-deck'))"
+      # Install packaged Digital Dream fonts into Flatpak's fontconfig search path.
+      # Fail rather than silently ship a UI with substituted fonts.
+      - |
+        /app/bin/python3 - <<'PY'
+        from pathlib import Path
+        from shutil import copy2
+        import pytrain.gui
+
+        source = Path(pytrain.gui.__file__).resolve().parent / "fonts"
+        fonts = sorted(p for p in source.rglob("*.ttf") if "digital" in p.stem.lower() and "dream" in p.stem.lower())
+        if not fonts:
+            raise RuntimeError(f"Digital Dream font not found in {source}")
+        destination = Path("/app/share/fonts/truetype/pycab")
+        destination.mkdir(parents=True, exist_ok=True)
+        for font in fonts:
+            target = destination / font.name
+            copy2(font, target)
+            print(f"Installed font: {target}")
+        PY
+      - fc-cache -f /app/share/fonts
+      - fc-list : family | grep -i 'digital.*dream'
       - install -Dm755 pycab-flatpak /app/bin/pycab-flatpak
       - install -Dm644 buttons.py /app/share/pycab/buttons.py
       - install -Dm644 io.github.cdswindell.PyCab.desktop /app/share/applications/io.github.cdswindell.PyCab.desktop
