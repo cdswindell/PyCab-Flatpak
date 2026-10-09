@@ -127,17 +127,17 @@ One PyCab installation supports both operating modes. In Steam Desktop Mode, ope
 | Launch Options | Behavior |
 | --- | --- |
 | *(empty)* | Existing client mode; connects to a separate PyTrain server. |
-| `--server` | Server mode; PyTrain discovers the Base 3 automatically. |
-| `--server --base-ip 192.168.4.100` | Server mode; PyTrain uses the specified Base 3 address (replace with yours). |
+| `--base3` | Server mode; PyTrain discovers the Base 3 automatically. |
+| `--base3 192.168.4.100` | Server mode; PyTrain uses the specified Base 3 address (replace with yours). |
 
-Under the hood, the launcher maps these to PyTrain's `-client`, `-base`, and `-base <ip>` flags. **Do not enter `-base` directly as a Steam option**; use the documented `--server` form.
+Under the hood, the launcher maps these to PyTrain's `-client`, `-base`, and `-base <ip>` flags. **Do not enter `-base` directly as a Steam option**; use the documented `--base3` form.
 
 For command-line testing:
 
 ```bash
 flatpak run io.github.cdswindell.PyCab
-flatpak run io.github.cdswindell.PyCab --server
-flatpak run io.github.cdswindell.PyCab --server --base-ip 192.168.4.100
+flatpak run io.github.cdswindell.PyCab --base3
+flatpak run io.github.cdswindell.PyCab --base3 192.168.4.100
 ```
 
 Server mode requires a reachable Base 3 and network discovery must work for the automatic option. This new launch-mode behavior must be tested in a newly built Flatpak; existing published bundles do not contain it.
