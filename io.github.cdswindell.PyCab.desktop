@@ -2,6 +2,7 @@
 Name=PyCab
 Comment=PyTrain Steam Deck Controller
 Exec=pycab-flatpak
+Icon=io.github.cdswindell.PyCab
 Terminal=false
 Type=Application
 Categories=Game;Utility;
