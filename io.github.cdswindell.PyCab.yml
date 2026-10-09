@@ -87,6 +87,31 @@ modules:
         PY
       - fc-cache -f /app/share/fonts
       - fc-list : family | grep -i 'digital.*dream'
+      # Install PyLegacy's existing PyCab artwork as standard Flatpak icons.
+      - |
+        /app/bin/python3 - <<'PY'
+        from importlib.resources import as_file, files
+        from pathlib import Path
+        from shutil import copy2
+        from PIL import Image
+        from pytrain.gui import images
+
+        source = files(images)
+        for name in ("en-US_pycab_small.png", "en-US_pycab_large.png"):
+            resource = source.joinpath(name)
+            if not resource.is_file():
+                raise RuntimeError(f"Missing packaged PyCab icon: {name}")
+            with as_file(resource) as path:
+                with Image.open(path) as icon:
+                    width, height = icon.size
+                    if width != height:
+                        raise RuntimeError(f"PyCab icon must be square: {name} ({width}x{height})")
+                    size = width
+                destination = Path(f"/app/share/icons/hicolor/{size}x{size}/apps/io.github.cdswindell.PyCab.png")
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                copy2(path, destination)
+                print(f"Installed PyCab icon: {destination}")
+        PY
       - install -Dm755 pycab-flatpak /app/bin/pycab-flatpak
       - install -Dm644 buttons.py /app/share/pycab/buttons.py
       - install -Dm644 io.github.cdswindell.PyCab.desktop /app/share/applications/io.github.cdswindell.PyCab.desktop
