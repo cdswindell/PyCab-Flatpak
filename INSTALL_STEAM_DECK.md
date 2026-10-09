@@ -120,6 +120,28 @@ While still in **Desktop Mode**:
 
 Launch PyCab from Steam in Desktop Mode and confirm that the Steam Deck buttons, sticks, and other supported controls work.
 
+## Select client or server mode using Steam Launch Options
+
+One PyCab installation supports both operating modes. In Steam Desktop Mode, open **PyCab > Properties > Shortcut** and edit **Launch Options**:
+
+| Launch Options | Behavior |
+| --- | --- |
+| *(empty)* | Existing client mode; connects to a separate PyTrain server. |
+| `--server` | Server mode; PyTrain discovers the Base 3 automatically. |
+| `--server --base-ip 192.168.4.100` | Server mode; PyTrain uses the specified Base 3 address (replace with yours). |
+
+Under the hood, the launcher maps these to PyTrain's `-client`, `-base`, and `-base <ip>` flags. **Do not enter `-base` directly as a Steam option**; use the documented `--server` form.
+
+For command-line testing:
+
+```bash
+flatpak run io.github.cdswindell.PyCab
+flatpak run io.github.cdswindell.PyCab --server
+flatpak run io.github.cdswindell.PyCab --server --base-ip 192.168.4.100
+```
+
+Server mode requires a reachable Base 3 and network discovery must work for the automatic option. This new launch-mode behavior must be tested in a newly built Flatpak; existing published bundles do not contain it.
+
 ## 6. Test in Gaming Mode
 
 1. On the Desktop, choose **Return to Gaming Mode**.
