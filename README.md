@@ -139,10 +139,14 @@ Steam Deck-specific controls.
 
 `requirements-lock.txt` is the exact Python environment installed in the released Flatpak. PyLegacy's `pyproject.toml` remains the source of truth for the dependency ranges supported by PyTrain; this lock records the exact versions selected and tested for PyCab.
 
-For a new PyTrain release, publish `pytrain-ogr-deck` to PyPI first, then deliberately regenerate the lock. `update-lock.sh` uses Docker to resolve dependencies in Linux/x86_64 with Python 3.14.8, matching the Flatpak target rather than the host Mac:
+For a new PyTrain release, publish `pytrain-ogr-deck` to PyPI first. On your Mac, run `./update-lock.sh 2.12.1` (requires GitHub CLI `gh`, **not Docker**). This triggers the `update-lock.yml` GitHub Actions workflow, which resolves dependencies on Linux/x86_64 with Python 3.14.8 and uploads `requirements-lock.txt` as an artifact. The workflow does not modify the repository automatically.
 
 ```bash
+git pull
 ./update-lock.sh 2.12.1
+gh run list --repo cdswindell/PyCab-Flatpak --workflow update-lock.yml --limit 5
+# Once the new run succeeds, replace RUN_ID with its ID:
+gh run download RUN_ID --repo cdswindell/PyCab-Flatpak --name requirements-lock --dir .
 git diff requirements-lock.txt
 ```
 
