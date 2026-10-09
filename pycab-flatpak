@@ -1,5 +1,6 @@
 #!/bin/sh
 export PYTRAIN_PLATFORM=steamdeck
+export PYTRAIN_DISABLE_SELF_UPDATE=1
 export PYTHONUNBUFFERED=1
 unset LD_PRELOAD
 
