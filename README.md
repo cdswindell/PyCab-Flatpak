@@ -1,5 +1,7 @@
 # PyCab Flatpak
 
+**New Steam Deck?** Follow [the complete installation guide](INSTALL_STEAM_DECK.md), including optional SSH setup, Flatpak installation, Steam shortcut configuration, and controller testing.
+
 Steam Deck Flatpak packaging for PyCab, the PyTrain controller. The Flatpak
 installs the `pytrain-ogr-deck` Python distribution rather than building
 PyLegacy source. The currently tested PyTrain release is **2.12.0**.
@@ -8,14 +10,9 @@ PyLegacy source. The currently tested PyTrain release is **2.12.0**.
 
 - Steam Deck in Desktop Mode with internet access.
 - Flatpak and Git (provided by SteamOS).
-- Flatpak Builder from Flathub.
 - Access to your PyTrain server on the network.
 
-Install Builder once, if needed:
-
-```bash
-flatpak install --user flathub org.flatpak.Builder
-```
+Flatpak Builder is needed only for the optional developer source build (`bash install.sh --build`), not for installing a published release.
 
 ## Install
 
