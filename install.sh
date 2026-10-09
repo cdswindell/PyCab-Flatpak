@@ -29,7 +29,7 @@ else
   echo "Downloading the latest PyCab Flatpak release..."
   curl -fL --retry 3 -o "$BUNDLE" "$RELEASE_URL"
   echo "Installing $APP_ID..."
-  flatpak install --user --noninteractive --or-update "$BUNDLE"
+  flatpak install --user --noninteractive --reinstall "$BUNDLE"
 fi
 
 echo "Installing host-side Steam launcher..."
