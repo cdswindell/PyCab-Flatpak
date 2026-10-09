@@ -3,30 +3,20 @@ export PYTRAIN_PLATFORM=steamdeck
 export PYTHONUNBUFFERED=1
 unset LD_PRELOAD
 
-# Default to the existing client behavior. PyTrain's -base option selects
-# server mode, with an optional Base 3 IP address.
+# No --base3: PyTrain client. --base3 [IP]: Base 3 server mode.
 case "${1:-}" in
-  --server)
+  --base3)
     shift
     case "${1:-}" in
-      --base-ip)
-        shift
-        if [ "$#" -eq 0 ] || [ -z "$1" ]; then
-          echo "Usage: --server [--base-ip <Base-3-IP>]" >&2
-          exit 2
-        fi
+      ""|-*)
+        exec /app/bin/pytrain -headless -base -buttons /app/share/pycab/buttons.py "$@"
+        ;;
+      *)
         BASE_IP="$1"
         shift
         exec /app/bin/pytrain -headless -base "$BASE_IP" -buttons /app/share/pycab/buttons.py "$@"
         ;;
-      *)
-        exec /app/bin/pytrain -headless -base -buttons /app/share/pycab/buttons.py "$@"
-        ;;
     esac
-    ;;
-  --base-ip)
-    echo "--base-ip requires --server" >&2
-    exit 2
     ;;
   *)
     exec /app/bin/pytrain -headless -client -buttons /app/share/pycab/buttons.py "$@"
