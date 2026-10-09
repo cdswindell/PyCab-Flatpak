@@ -3,9 +3,9 @@ export PYTRAIN_PLATFORM=steamdeck
 export PYTHONUNBUFFERED=1
 unset LD_PRELOAD
 
-# No --base3: PyTrain client. --base3 [IP]: Base 3 server mode.
+# No -base: PyTrain client. -base [IP]: Base 3 server mode.
 case "${1:-}" in
-  --base3)
+  -base)
     shift
     case "${1:-}" in
       ""|-*)
