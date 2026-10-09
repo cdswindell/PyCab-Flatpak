@@ -4,6 +4,14 @@ export PYTRAIN_DISABLE_SELF_UPDATE=1
 export PYTHONUNBUFFERED=1
 unset LD_PRELOAD
 
+# Keep synchronized engine images, product metadata, and configuration
+# on persistent Flatpak storage, shared by client and server modes.
+CACHE_ROOT="${XDG_DATA_HOME:-$HOME/.var/app/io.github.cdswindell.PyCab/data}/cache"
+mkdir -p "$CACHE_ROOT/engine_images" "$CACHE_ROOT/engine_info" "$CACHE_ROOT/config" || exit 1
+export ENGINE_IMAGES_CACHE_DIR="$CACHE_ROOT/engine_images"
+export ENGINE_INFO_CACHE_DIR="$CACHE_ROOT/engine_info"
+export CONFIG_CACHE_DIR="$CACHE_ROOT/config"
+
 # No -base: PyTrain client. -base [IP]: Base 3 server mode.
 case "${1:-}" in
   -base)
