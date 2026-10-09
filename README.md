@@ -157,3 +157,10 @@ git push origin v2.12.1
 ```
 
 The release workflow refuses to build when the release tag and the locked `pytrain-ogr-deck` version differ, and it verifies that the exact PyTrain version is available on PyPI before starting the Flatpak build.
+
+
+## Digital Dream font
+
+The Flatpak build copies Digital Dream TTF files from the installed `pytrain.gui/fonts` Python package into `/app/share/fonts/truetype/pycab`, refreshes fontconfig, and fails if the font is absent or not recognized. Users do not need to install the font on SteamOS.
+
+**Redistribution permission is pending.** Do not publish a new Flatpak bundle containing Digital Dream until the font author grants permission. Retain the author's written permission and attribution alongside the source font in PyLegacy. The existing PyPI package may already contain the font and should be reviewed for compliance.
