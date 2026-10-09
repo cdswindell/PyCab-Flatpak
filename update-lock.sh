@@ -1,49 +1,36 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ $# -ne 1 ]]; then
-  echo "Usage: $0 <PyTrain-version>"
-  echo "Example: $0 2.12.1"
+if [[ $# -ne 1 || ! "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.]+)?$ ]]; then
+  echo "Usage: $0 <PyTrain-version> (e.g. 2.12.1)"
   exit 2
 fi
 
-VERSION="$1"
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOCK="$ROOT/requirements-lock.txt"
-IMAGE="python:3.14.8-slim"
-TMP="$(mktemp -d)"
-
-cleanup() {
-  rm -rf "$TMP"
-}
-trap cleanup EXIT
-
-if ! command -v docker >/dev/null 2>&1; then
-  echo "Docker is required to generate the Linux/x86_64 dependency lock."
-  echo "Install/start Docker Desktop and try again."
+if ! command -v gh >/dev/null 2>&1; then
+  echo "GitHub CLI (gh) is required; install it and run 'gh auth login'."
   exit 1
 fi
 
-echo "Resolving pytrain-ogr-deck==$VERSION in Linux/x86_64 using $IMAGE..."
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$ROOT"
+VERSION="$1"
+REPO="cdswindell/PyCab-Flatpak"
 
-docker run --rm \
-  --platform linux/amd64 \
-  -e VERSION="$VERSION" \
-  -v "$TMP:/out" \
-  "$IMAGE" \
-  /bin/sh -c '
-    set -eu
-    python -m pip install --disable-pip-version-check "pytrain-ogr-deck==$VERSION"
-    {
-      echo "# Exact Python environment resolved for PyCab / pytrain-ogr-deck==$VERSION."
-      echo "# Generated in Linux/x86_64 with Python 3.14.8."
-      echo "# Regenerate deliberately with ./update-lock.sh <PyTrain-version>."
-      python -m pip freeze | LC_ALL=C sort -f
-    } > /out/requirements-lock.txt
-  '
+echo "Requesting Linux/x86_64 Python 3.14.8 lock for pytrain-ogr-deck==$VERSION..."
+gh workflow run update-lock.yml --repo "$REPO" --ref master -f version="$VERSION"
 
-mv "$TMP/requirements-lock.txt" "$LOCK"
+cat <<EOF
 
-echo
-echo "Updated $LOCK for pytrain-ogr-deck==$VERSION"
-echo "Review the diff, build/test PyCab, then commit the lock before tagging the release."
+GitHub Actions is generating the lock (no Docker required).
+View runs:
+  gh run list --repo $REPO --workflow update-lock.yml --limit 5
+
+When the run succeeds, download its artifact into this checkout:
+  gh run download RUN_ID --repo $REPO --name requirements-lock --dir .
+
+Then inspect and test:
+  git diff requirements-lock.txt
+  bash build-release.sh
+
+Do not commit/tag until the new Flatpak is tested.
+EOF
