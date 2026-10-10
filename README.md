@@ -4,7 +4,8 @@
 
 Steam Deck Flatpak packaging for PyCab, the PyTrain controller. The Flatpak
 installs the `pytrain-ogr-deck` Python distribution rather than building
-PyLegacy source. The currently tested PyTrain release is **2.12.0**.
+PyLegacy source. The release automation pins the PyTrain version in `requirements-lock.txt`;
+the currently packaged release is **2.12.4**.
 
 ## Requirements
 
@@ -64,13 +65,19 @@ host-side shell launcher is the verified workaround.
 
 ## Update
 
+To update an existing Flatpak installation to the latest **published** release,
+use the checksum-verifying installer (GitHub CLI is not required on the Deck):
+
 ```bash
 cd ~/PyCab-Flatpak
-git pull
-bash install.sh
+git pull --ff-only origin master
+./install-release.sh
 ```
 
-The installer downloads the newest published bundle, updates the user Flatpak, and refreshes the Steam launcher. Existing Steam shortcuts continue pointing to the same launcher path.
+This verifies `PyCab.flatpak.sha256`, reinstalls the user Flatpak without
+deleting app data, and reports the installed PyTrain version. The existing
+Steam shortcut remains valid. For a first-time install or to refresh the
+host-side `pycab-steam` launcher, use `bash install.sh` instead.
 
 ## Uninstall / clean-install test
 
@@ -101,64 +108,51 @@ until you've decided whether you want to preserve configuration.
 
 ## Creating a release
 
-Release bundles are built by GitHub Actions. Push a version tag such as:
+See [RELEASE_AUTOMATION.md](RELEASE_AUTOMATION.md) for the full workflow.
+
+On the development Mac, after tagging PyLegacy and publishing both PyPI
+distributions:
 
 ```bash
-git tag v2.12.0
-git push origin v2.12.0
+./publish-release.sh --dry-run
+./publish-release.sh
 ```
 
-The release workflow builds `dist/PyCab.flatpak`, generates
-`PyCab.flatpak.sha256`, and attaches both files to the GitHub Release. Normal
-installations then consume that prebuilt bundle.
+The script checks both PyPI distributions, regenerates the Linux dependency
+lock if the PyTrain version changed, and asks for explicit confirmation before
+pushing the PyCab release tag. GitHub Actions builds and publishes the Flatpak.
 
-A local release bundle can also be produced with:
+For **PyCab packaging-only changes** (documentation, launchers, manifest,
+installer, etc.) that do not change PyTrain, commit and push those changes to
+`master`, then run:
 
 ```bash
-bash build-release.sh
+./publish-release.sh --rebuild --dry-run
+./publish-release.sh --rebuild
 ```
 
-## Packaging notes
+This creates a new immutable packaging revision such as `v2.12.4-1`
+without changing the pinned `pytrain-ogr-deck==2.12.4` version. Never move
+an existing release tag.
 
-The release bundle means an end user's Deck no longer resolves PyPI
-dependencies or compiles Tcl/Tk/Python. The bundle itself is still produced
-from a manifest whose Python dependency resolution occurs at build time.
-`pytrain-ogr-deck` is pinned to 2.12.0, but transitive Python dependencies
-are not yet hash-locked. Hash-locking those inputs remains the next
-reproducibility improvement.
+A developer can also build locally with `bash build-release.sh`.
 
-The Flatpak intentionally grants broad device access: pygame/SDL reads the
-Steam virtual controller while PyCab also uses `/dev/hidraw*` for
-Steam Deck-specific controls.
+## Packaging and cache notes
 
+`requirements-lock.txt` pins the exact Linux/x86_64 Python environment used
+by GitHub Actions (Python 3.14.8). PyLegacy's `pyproject.toml` specifies the
+supported dependency ranges; the Flatpak lock pins the resolved versions.
+These are version locks, **not a hash-locked dependency set**.
 
-## Locked Python dependencies
+The Flatpak includes Tcl/Tk, Python, and PyTrain, so installation on the Deck
+does not compile them. It grants broad device access so pygame/SDL and
+Deck-specific controls can access the required devices.
 
-`requirements-lock.txt` is the exact Python environment installed in the released Flatpak. PyLegacy's `pyproject.toml` remains the source of truth for the dependency ranges supported by PyTrain; this lock records the exact versions selected and tested for PyCab.
-
-For a new PyTrain release, publish `pytrain-ogr-deck` to PyPI first. On your Mac, run `./update-lock.sh 2.12.1` (requires GitHub CLI `gh`, **not Docker**). This triggers the `update-lock.yml` GitHub Actions workflow, which resolves dependencies on Linux/x86_64 with Python 3.14.8 and uploads `requirements-lock.txt` as an artifact. The workflow does not modify the repository automatically.
-
-```bash
-git pull
-./update-lock.sh 2.12.1
-gh run list --repo cdswindell/PyCab-Flatpak --workflow update-lock.yml --limit 5
-# Once the new run succeeds, replace RUN_ID with its ID:
-gh run download RUN_ID --repo cdswindell/PyCab-Flatpak --name requirements-lock --dir .
-git diff requirements-lock.txt
-```
-
-Build and test the resulting PyCab Flatpak before committing the new lock. Once validated:
-
-```bash
-git add requirements-lock.txt
-git commit -m "Lock PyCab dependencies for PyTrain 2.12.1"
-git push
-git tag v2.12.1
-git push origin v2.12.1
-```
-
-The release workflow refuses to build when the release tag and the locked `pytrain-ogr-deck` version differ, and it verifies that the exact PyTrain version is available on PyPI before starting the Flatpak build.
-
+From PyTrain 2.12.4 onward, the launcher sets `PYTRAIN_CACHE_DIR` to
+persistent Flatpak application storage. Engine images, product metadata,
+and accessory configuration use its `engine_images/`, `engine_info/`,
+and `config/` subdirectories. Raspberry Pi installations without that
+variable retain their existing relative cache paths.
 
 ## Digital Dream font
 
