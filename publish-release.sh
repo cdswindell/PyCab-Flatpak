@@ -4,6 +4,10 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$ROOT/scripts/environment.sh"
 pycab_require_mac
 cd "$ROOT"
+MODE="${1:-}"
+if [[ $# -gt 1 || ( -n "$MODE" && "$MODE" != "--rebuild" ) ]]; then
+  echo "Usage: $0 [--rebuild]" >&2; exit 2
+fi
 for tool in git gh curl python3; do
   command -v "$tool" >/dev/null || { echo "Missing required tool: $tool" >&2; exit 1; }
 done
@@ -20,6 +24,16 @@ VERSION="$(gh api 'repos/cdswindell/PyLegacy/git/matching-refs/tags/v' --paginat
 [[ -n "$VERSION" ]] || { echo "ERROR: No stable PyLegacy vX.Y.Z tag found." >&2; exit 1; }
 TAG="v$VERSION"
 echo "Selected PyTrain $TAG"
+if [[ "$MODE" == "--rebuild" ]]; then
+  LOCKED="$(sed -n 's/^pytrain-ogr-deck==//p' requirements-lock.txt)"
+  [[ "$LOCKED" == "$VERSION" ]] || { echo "ERROR: --rebuild requires the current lock to match latest PyTrain $VERSION (found $LOCKED)." >&2; exit 1; }
+  # Never rewrite existing release tags. Allocate the next packaging revision.
+  NEXT=1
+  while git rev-parse -q --verify "refs/tags/v$VERSION-$NEXT" >/dev/null || git ls-remote --exit-code --tags origin "refs/tags/v$VERSION-$NEXT" >/dev/null 2>&1; do
+    NEXT=$((NEXT + 1))
+  done
+  TAG="v$VERSION-$NEXT"
+fi
 for package in pytrain-ogr-deck pytrain-ogr; do
   echo "Verifying $package==$VERSION on PyPI..."
   python3 - "$package" "$VERSION" <<'PY'
@@ -70,7 +84,7 @@ fi
 
 git diff -- requirements-lock.txt
 echo
-echo "Ready to publish PyCab $TAG from the published PyPI packages."
+echo "Ready to publish PyCab $TAG using PyTrain $VERSION."
 read -r -p "Type '$TAG' to commit, push, and tag the release: " CONFIRM
 [[ "$CONFIRM" == "$TAG" ]] || { echo "Canceled. No release tag pushed."; exit 1; }
 
