@@ -45,10 +45,10 @@ import sys
 from pathlib import Path
 
 line = Path(sys.argv[1]).read_text().strip()
-match = re.fullmatch(r"([0-9a-fA-F]{64})\\s+\\*?(.+)", line)
+match = re.fullmatch(r"([0-9a-fA-F]{64})\s+\*?(.+)", line)
 if not match or Path(match.group(2)).name != "PyCab.flatpak":
     sys.exit("ERROR: Invalid PyCab checksum manifest.")
-Path(sys.argv[2]).write_text(f"{match.group(1)}  PyCab.flatpak\\n")
+Path(sys.argv[2]).write_text(f"{match.group(1)}  PyCab.flatpak\n")
 PY
 (cd "$TMP" && sha256sum -c PyCab.flatpak.check)
 flatpak install --user --reinstall -y "$TMP/PyCab.flatpak"
