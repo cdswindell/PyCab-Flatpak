@@ -4,29 +4,43 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$ROOT/scripts/environment.sh"
 pycab_require_mac
 cd "$ROOT"
-MODE="${1:-}"
-if [[ $# -gt 1 || ( -n "$MODE" && "$MODE" != "--rebuild" ) ]]; then
-  echo "Usage: $0 [--rebuild]" >&2; exit 2
-fi
+REBUILD=false
+DRY_RUN=false
+for arg in "$@"; do
+  case "$arg" in
+    --rebuild) [[ "$REBUILD" == false ]] || { echo "Duplicate --rebuild" >&2; exit 2; }; REBUILD=true ;;
+    --dry-run) [[ "$DRY_RUN" == false ]] || { echo "Duplicate --dry-run" >&2; exit 2; }; DRY_RUN=true ;;
+    *) echo "Usage: $0 [--rebuild] [--dry-run]" >&2; exit 2 ;;
+  esac
+done
 for tool in git gh curl python3; do
   command -v "$tool" >/dev/null || { echo "Missing required tool: $tool" >&2; exit 1; }
 done
 gh auth status >/dev/null
-[[ "$(git branch --show-current)" == "master" ]] || { echo "ERROR: Switch to master before publishing." >&2; exit 1; }
-[[ -z "$(git status --porcelain)" ]] || { echo "ERROR: Working tree is not clean." >&2; exit 1; }
-git fetch origin master --tags
-[[ "$(git rev-parse HEAD)" == "$(git rev-parse origin/master)" ]] || { echo "ERROR: master is not synchronized with origin/master." >&2; exit 1; }
+if [[ "$DRY_RUN" == false ]]; then
+  [[ "$(git branch --show-current)" == "master" ]] || { echo "ERROR: Switch to master before publishing." >&2; exit 1; }
+  [[ -z "$(git status --porcelain)" ]] || { echo "ERROR: Working tree is not clean." >&2; exit 1; }
+  git fetch origin master --tags
+  [[ "$(git rev-parse HEAD)" == "$(git rev-parse origin/master)" ]] || { echo "ERROR: master is not synchronized with origin/master." >&2; exit 1; }
+else
+  echo "DRY RUN: No files, commits, tags, workflows, or remote refs will be changed."
+  echo "Branch: $(git branch --show-current) (publishing requires clean, synchronized master)"
+fi
 
-echo "Finding latest stable PyLegacy release tag..."
-VERSION="$(gh api 'repos/cdswindell/PyLegacy/git/matching-refs/tags/v' --paginate --jq '.[].ref' |
+if [[ "$REBUILD" == true ]]; then
+  VERSION="$(sed -n 's/^pytrain-ogr-deck==//p' requirements-lock.txt)"
+  [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "ERROR: Lock must pin exactly one stable pytrain-ogr-deck version." >&2; exit 1; }
+  echo "Rebuilding pinned PyTrain v$VERSION"
+else
+  echo "Finding latest stable PyLegacy release tag..."
+  VERSION="$(gh api 'repos/cdswindell/PyLegacy/git/matching-refs/tags/v' --paginate --jq '.[].ref' |
   sed -nE 's@^refs/tags/v([0-9]+\.[0-9]+\.[0-9]+)$@\1@p' |
   sort -V | tail -n 1)"
 [[ -n "$VERSION" ]] || { echo "ERROR: No stable PyLegacy vX.Y.Z tag found." >&2; exit 1; }
 TAG="v$VERSION"
 echo "Selected PyTrain $TAG"
-if [[ "$MODE" == "--rebuild" ]]; then
-  LOCKED="$(sed -n 's/^pytrain-ogr-deck==//p' requirements-lock.txt)"
-  [[ "$LOCKED" == "$VERSION" ]] || { echo "ERROR: --rebuild requires the current lock to match latest PyTrain $VERSION (found $LOCKED)." >&2; exit 1; }
+fi
+if [[ "$REBUILD" == true ]]; then
   # Never rewrite existing release tags. Allocate the next packaging revision.
   NEXT=1
   while git rev-parse -q --verify "refs/tags/v$VERSION-$NEXT" >/dev/null || git ls-remote --exit-code --tags origin "refs/tags/v$VERSION-$NEXT" >/dev/null 2>&1; do
@@ -61,17 +75,21 @@ CURRENT="$(sed -n 's/^pytrain-ogr-deck==//p' requirements-lock.txt)"
 if [[ "$CURRENT" == "$VERSION" ]]; then
   echo "Dependency lock already targets $VERSION; no regeneration needed."
 else
-  echo "Generating Linux dependency lock for $VERSION..."
-  # Capture latest run ID before dispatch; never select a prior run.
-  BEFORE="$(gh run list --repo cdswindell/PyCab-Flatpak --workflow update-lock.yml --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
-  gh workflow run update-lock.yml --repo cdswindell/PyCab-Flatpak --ref master -f version="$VERSION"
-  RUN=""
-  for _ in {1..30}; do
-    RUN="$(gh run list --repo cdswindell/PyCab-Flatpak --workflow update-lock.yml --event workflow_dispatch --limit 10 --json databaseId --jq ".[] | select(.databaseId > $BEFORE) | .databaseId" | head -n 1)"
-    [[ -n "$RUN" ]] && break
-    sleep 3
-  done
-  [[ -n "$RUN" ]] || { echo "ERROR: Could not identify new lock workflow run." >&2; exit 1; }
+  if [[ "$DRY_RUN" == true ]]; then
+    echo "DRY RUN: Would dispatch update-lock.yml for PyTrain $VERSION on master and download the verified artifact."
+  else
+    echo "Generating Linux dependency lock for $VERSION..."
+    # Match a unique workflow run-name, not merely a newer run ID.
+    REQUEST_ID="$(python3 -c 'import uuid; print(uuid.uuid4())')"
+    EXPECTED_TITLE="Lock $VERSION / $REQUEST_ID"
+    gh workflow run update-lock.yml --repo cdswindell/PyCab-Flatpak --ref master -f version="$VERSION" -f request_id="$REQUEST_ID"
+    RUN=""
+    for _ in {1..30}; do
+      RUN="$(gh run list --repo cdswindell/PyCab-Flatpak --workflow update-lock.yml --event workflow_dispatch --limit 50 --json databaseId,displayTitle --jq ".[] | select(.displayTitle == \"$EXPECTED_TITLE\") | .databaseId" | sed -n '1p')"
+      [[ -n "$RUN" ]] && break
+      sleep 3
+    done
+    [[ -n "$RUN" ]] || { echo "ERROR: Could not identify lock workflow run $REQUEST_ID." >&2; exit 1; }
   echo "Waiting for lock workflow run $RUN..."
   gh run watch "$RUN" --repo cdswindell/PyCab-Flatpak --exit-status
   TMP="$(mktemp -d)"
@@ -80,9 +98,15 @@ else
   grep -Fxq "pytrain-ogr-deck==$VERSION" "$TMP/requirements-lock.txt" ||
     { echo "ERROR: Downloaded lock does not match $VERSION." >&2; exit 1; }
   cp "$TMP/requirements-lock.txt" requirements-lock.txt
+  fi
 fi
 
 git diff -- requirements-lock.txt
+if [[ "$DRY_RUN" == true ]]; then
+  echo "DRY RUN: Would publish PyCab $TAG using PyTrain $VERSION."
+  echo "DRY RUN: Would require clean, synchronized master; commit any updated lock; push the release tag."
+  exit 0
+fi
 echo
 echo "Ready to publish PyCab $TAG using PyTrain $VERSION."
 read -r -p "Type '$TAG' to commit, push, and tag the release: " CONFIRM
