@@ -14,7 +14,7 @@ The script selects the highest stable `vX.Y.Z` tag in PyLegacy, verifies both Py
 
 **Do not run this script until the automation changes have been merged to master.** It dispatches the lock workflow on master. This development branch does not publish a release.
 
-## Install from Steam Deck SSH or Desktop Mode
+For packaging-only changes that retain the latest published PyTrain version, use `bash publish-release.sh --rebuild`. This creates the next immutable PyCab packaging tag (`v2.12.3-1`, `v2.12.3-2`, etc.) while retaining `pytrain-ogr-deck==2.12.3`. Existing tags are never moved.\n\n## Install from Steam Deck SSH or Desktop Mode
 
 ```bash
 bash install-release.sh
