@@ -104,7 +104,7 @@ else
   fi
 fi
 
-git diff -- requirements-lock.txt
+git --no-pager diff -- requirements-lock.txt
 if [[ "$DRY_RUN" == true ]]; then
   echo "DRY RUN: Would publish PyCab $TAG using PyTrain $VERSION."
   echo "DRY RUN: Would require clean, synchronized master; commit any updated lock; push the release tag."
