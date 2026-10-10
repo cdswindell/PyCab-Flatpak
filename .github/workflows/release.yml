@@ -77,3 +77,4 @@ jobs:
           files: |
             dist/PyCab.flatpak
             dist/PyCab.flatpak.sha256
+            dist/PyCab-Installer.zip
