@@ -95,7 +95,7 @@ def main():
         sys.exit("Unknown Steam shortcuts format; no changes made.")
     try:
         entries, end = parse(raw, len(header))
-        if end != len(raw) or any(kind != 0 for kind, _, _ in entries):
+        if raw[end:] not in (b"", b"\\x08") or any(kind != 0 for kind, _, _ in entries):
             raise ValueError("Unexpected shortcut structure")
         matches = [(key, fields) for _, key, fields in entries
                    if string(fields, "appname") == APP]
@@ -143,7 +143,7 @@ def main():
             print(f"Backup: {backup}")
         temp = path.with_name("shortcuts.vdf.pycab-tmp")
         try:
-            temp.write_bytes(header + encode(entries))
+            temp.write_bytes(header + encode(entries) + raw[end:])
             os.replace(temp, path)
         finally:
             temp.unlink(missing_ok=True)
