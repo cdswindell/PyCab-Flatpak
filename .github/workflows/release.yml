@@ -17,14 +17,19 @@ jobs:
 
       - name: Validate release lock and PyPI package
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          RELEASE_VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${RELEASE_VERSION%%-*}"
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[1-9][0-9]*)?$ ]]; then
+            echo "::error::Unsupported PyCab release tag: $GITHUB_REF_NAME"
+            exit 1
+          fi
           LOCKED_VERSION="$(sed -n 's/^pytrain-ogr-deck==//p' requirements-lock.txt)"
           if [[ -z "$LOCKED_VERSION" ]]; then
             echo "::error::requirements-lock.txt does not contain pytrain-ogr-deck."
             exit 1
           fi
           if [[ "$LOCKED_VERSION" != "$VERSION" ]]; then
-            echo "::error::Release tag v$VERSION does not match locked pytrain-ogr-deck==$LOCKED_VERSION."
+            echo "::error::Release tag $GITHUB_REF_NAME does not match locked pytrain-ogr-deck==$LOCKED_VERSION."
             echo "::error::Run ./update-lock.sh $VERSION, test the resulting Flatpak, commit the lock, then tag the release."
             exit 1
           fi

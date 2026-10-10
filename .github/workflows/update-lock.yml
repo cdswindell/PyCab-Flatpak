@@ -1,4 +1,5 @@
 name: Generate Python Dependency Lock
+run-name: Lock ${{ inputs.version }} / ${{ inputs.request_id || 'manual' }}
 
 on:
   workflow_dispatch:
@@ -6,6 +7,10 @@ on:
       version:
         description: "Published pytrain-ogr-deck version (e.g. 2.12.1)"
         required: true
+        type: string
+      request_id:
+        description: "Optional unique identifier for release-script dispatch"
+        required: false
         type: string
 
 permissions:

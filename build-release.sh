@@ -23,7 +23,7 @@ fi
   "$APP_ID.yml"
 
 flatpak build-bundle "$REPO" "$DIST/PyCab.flatpak" "$APP_ID" master
-sha256sum "$DIST/PyCab.flatpak" > "$DIST/PyCab.flatpak.sha256"
+(cd "$DIST" && sha256sum PyCab.flatpak > PyCab.flatpak.sha256)
 
 echo "Created:"
 ls -lh "$DIST/PyCab.flatpak" "$DIST/PyCab.flatpak.sha256"
