@@ -15,6 +15,7 @@ APP_ID = "io.github.cdswindell.PyCab"
 HOME = Path.home()
 LAUNCHER = HOME / ".local/bin/pycab-steam"
 ICON = HOME / f".local/share/flatpak/exports/share/icons/hicolor/512x512/apps/{APP_ID}.png"
+ART = Path(__file__).resolve().parent.parent / "artwork"
 
 
 def read_cstr(raw, offset):
@@ -132,9 +133,9 @@ def main():
         entries.append((0, index, fields))
         print("Adding PyCab as a non-Steam game.")
 
-    artwork = config / "grid" / f"{appid}p.png"
+    artwork = config / "grid" / f"{appid}.png"
     if args.dry_run:
-        print(f"DRY RUN: shortcut file {path}; artwork {artwork}")
+        print(f"DRY RUN: shortcut file {path}; artwork {artwork}; assets available: {ART.is_dir()}")
         return
     if not matches:
         if path.exists():
@@ -153,8 +154,19 @@ def main():
         finally:
             temp.unlink(missing_ok=True)
     artwork.parent.mkdir(parents=True, exist_ok=True)
-    if not artwork.exists():
-        shutil.copy2(ICON, artwork)
+    assets = {
+        f"{appid}.png": "landscape.png",
+        f"{appid}p.png": "portrait.png",
+        f"{appid}_hero.png": "hero.png",
+        f"{appid}_logo.png": "square.png",
+    }
+    if ART.is_dir() and all((ART / name).is_file() for name in assets.values()):
+        for filename, asset in assets.items():
+            shutil.copyfile(ART / asset, artwork.parent / filename)
+        print("Installed matching landscape, portrait, hero, and logo artwork.")
+    else:
+        shutil.copyfile(ICON, artwork)
+        print("Artwork package not found; installed fallback icon.")
     print("Steam shortcut and grid artwork ready. Restart Steam.")
     print("In Steam: PyCab > Properties > Controller > Enable Steam Input, if needed.")
 
