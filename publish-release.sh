@@ -34,11 +34,11 @@ if [[ "$REBUILD" == true ]]; then
 else
   echo "Finding latest stable PyLegacy release tag..."
   VERSION="$(gh api 'repos/cdswindell/PyLegacy/git/matching-refs/tags/v' --paginate --jq '.[].ref' |
-  sed -nE 's@^refs/tags/v([0-9]+\.[0-9]+\.[0-9]+)$@\1@p' |
-  sort -V | tail -n 1)"
-[[ -n "$VERSION" ]] || { echo "ERROR: No stable PyLegacy vX.Y.Z tag found." >&2; exit 1; }
-TAG="v$VERSION"
-echo "Selected PyTrain $TAG"
+    sed -nE 's@^refs/tags/v([0-9]+\.[0-9]+\.[0-9]+)$@\1@p' |
+    sort -V | tail -n 1)"
+  [[ -n "$VERSION" ]] || { echo "ERROR: No stable PyLegacy vX.Y.Z tag found." >&2; exit 1; }
+  TAG="v$VERSION"
+  echo "Selected PyTrain $TAG"
 fi
 if [[ "$REBUILD" == true ]]; then
   # Never rewrite existing release tags. Allocate the next packaging revision.
@@ -64,11 +64,14 @@ except Exception as exc:
 PY
 done
 
-if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-  echo "ERROR: PyCab tag $TAG already exists locally." >&2; exit 1
-fi
-if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
-  echo "ERROR: PyCab tag $TAG already exists on origin." >&2; exit 1
+if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null ||
+   git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+  if [[ "$DRY_RUN" == true ]]; then
+    echo "DRY RUN: Tag $TAG already exists; an actual publication would stop."
+  else
+    echo "ERROR: PyCab tag $TAG already exists." >&2
+    exit 1
+  fi
 fi
 
 CURRENT="$(sed -n 's/^pytrain-ogr-deck==//p' requirements-lock.txt)"
