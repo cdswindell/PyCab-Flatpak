@@ -32,11 +32,11 @@ if [[ "$REBUILD" == true ]]; then
   [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "ERROR: Lock must pin exactly one stable pytrain-ogr-deck version." >&2; exit 1; }
   echo "Rebuilding pinned PyTrain v$VERSION"
 else
-  echo "Finding latest stable PyLegacy release tag..."
-  VERSION="$(gh api 'repos/cdswindell/PyLegacy/git/matching-refs/tags/v' --paginate --jq '.[].ref' |
-    sed -nE 's@^refs/tags/v([0-9]+\.[0-9]+\.[0-9]+)$@\1@p' |
+  echo "Finding latest stable PyLegacy release tag (numeric, no v prefix)..."
+  VERSION="$(gh api 'repos/cdswindell/PyLegacy/git/matching-refs/tags/' --paginate --jq '.[].ref' |
+    sed -nE 's@^refs/tags/([0-9]+\.[0-9]+\.[0-9]+)$@\1@p' |
     sort -V | tail -n 1)"
-  [[ -n "$VERSION" ]] || { echo "ERROR: No stable PyLegacy vX.Y.Z tag found." >&2; exit 1; }
+  [[ -n "$VERSION" ]] || { echo "ERROR: No stable PyLegacy X.Y.Z tag found." >&2; exit 1; }
   TAG="v$VERSION"
   echo "Selected PyTrain $TAG"
 fi
