@@ -133,11 +133,20 @@ def main():
         entries.append((0, index, fields))
         print("Adding PyCab as a non-Steam game.")
 
+    sidebar_source = ART / "sidebar.png"
+    sidebar_icon = HOME / ".local/share/icons/pycab-steam.png"
+    update_sidebar = sidebar_source.is_file()
+    if update_sidebar:
+        icon_field = (1, "icon", str(sidebar_icon))
+        positions = [i for i, (_, key, _) in enumerate(fields) if key.lower() == "icon"]
+        if len(positions) != 1 or fields[positions[0]][0] != 1:
+            sys.exit("PyCab shortcut icon field is ambiguous; no changes made.")
+        fields[positions[0]] = icon_field
     artwork = config / "grid" / f"{appid}.png"
     if args.dry_run:
         print(f"DRY RUN: shortcut file {path}; artwork {artwork}; assets available: {ART.is_dir()}")
         return
-    if not matches:
+    if not matches or update_sidebar:
         if path.exists():
             backup = path.with_name(f"shortcuts.vdf.backup-{int(time.time())}")
             shutil.copy2(path, backup)
@@ -153,9 +162,12 @@ def main():
             os.replace(temp, path)
         finally:
             temp.unlink(missing_ok=True)
+    if update_sidebar:
+        sidebar_icon.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(sidebar_source, sidebar_icon)
     artwork.parent.mkdir(parents=True, exist_ok=True)
     assets = {
-        f"{appid}.png": "landscape.png",
+        f"{appid}.png": "portrait.png",
         f"{appid}p.png": "portrait.png",
         f"{appid}_hero.png": "hero.png",
         f"{appid}_logo.png": "square.png",
@@ -163,7 +175,7 @@ def main():
     if ART.is_dir() and all((ART / name).is_file() for name in assets.values()):
         for filename, asset in assets.items():
             shutil.copyfile(ART / asset, artwork.parent / filename)
-        print("Installed matching landscape, portrait, hero, and logo artwork.")
+        print("Installed portrait grid, hero, and logo artwork.")
     else:
         shutil.copyfile(ICON, artwork)
         print("Artwork package not found; installed fallback icon.")
