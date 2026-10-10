@@ -95,7 +95,7 @@ def main():
         sys.exit("Unknown Steam shortcuts format; no changes made.")
     try:
         entries, end = parse(raw, len(header))
-        if raw[end:] not in (b"", b"\\x08") or any(kind != 0 for kind, _, _ in entries):
+        if raw[end:] not in (b"", bytes([8])) or any(kind != 0 for kind, _, _ in entries):
             raise ValueError("Unexpected shortcut structure")
         matches = [(key, fields) for _, key, fields in entries
                    if string(fields, "appname") == APP]
