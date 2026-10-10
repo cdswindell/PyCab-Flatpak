@@ -167,7 +167,7 @@ def main():
         shutil.copyfile(sidebar_source, sidebar_icon)
     artwork.parent.mkdir(parents=True, exist_ok=True)
     assets = {
-        f"{appid}.png": "portrait.png",
+        f"{appid}.png": "landscape.png",
         f"{appid}p.png": "portrait.png",
         f"{appid}_hero.png": "hero.png",
         f"{appid}_logo.png": "square.png",
@@ -175,7 +175,7 @@ def main():
     if ART.is_dir() and all((ART / name).is_file() for name in assets.values()):
         for filename, asset in assets.items():
             shutil.copyfile(ART / asset, artwork.parent / filename)
-        print("Installed portrait grid, hero, and logo artwork.")
+        print("Installed landscape, portrait, hero, and logo artwork.")
     else:
         shutil.copyfile(ICON, artwork)
         print("Artwork package not found; installed fallback icon.")
