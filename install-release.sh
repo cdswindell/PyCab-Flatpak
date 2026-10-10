@@ -54,4 +54,11 @@ PY
 flatpak install --user --reinstall -y "$TMP/PyCab.flatpak"
 flatpak info --user io.github.cdswindell.PyCab
 flatpak run --command=/app/bin/python3 io.github.cdswindell.PyCab -c "from importlib.metadata import version; print('PyTrain:', version('pytrain-ogr-deck'))"
+install -Dm755 "$ROOT/pycab-steam" "$HOME/.local/bin/pycab-steam"
+if pgrep -x steam >/dev/null 2>&1; then
+  echo "Steam is running; exit Steam completely, then run:"
+  echo "  python3 $ROOT/scripts/install-steam-shortcut.py"
+else
+  python3 "$ROOT/scripts/install-steam-shortcut.py"
+fi
 echo "Installed. Launch in Steam Gaming Mode or a local Deck desktop console."

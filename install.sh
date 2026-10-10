@@ -34,13 +34,16 @@ fi
 
 echo "Installing host-side Steam launcher..."
 install_launcher
+if pgrep -x steam >/dev/null 2>&1; then
+  echo "Steam is running; exit Steam completely, then run:"
+  echo "  python3 $ROOT/scripts/install-steam-shortcut.py"
+else
+  python3 "$ROOT/scripts/install-steam-shortcut.py"
+fi
 
 cat <<EOF
 Installed $APP_ID.
-To add it to Steam as a non-Steam game, use:
-  Target:         $HOME/.local/bin/pycab-steam
-  Start In:       $HOME
-  Launch Options: (empty)
+Steam shortcut and artwork: configured if Steam was closed.
 Set Properties > Controller > Override for PyCab to Enable Steam Input.
 Test from Konsole with: flatpak run $APP_ID
 EOF
