@@ -140,7 +140,7 @@ flatpak run io.github.cdswindell.PyCab -base
 flatpak run io.github.cdswindell.PyCab -base 192.168.4.100
 ```
 
-Server mode requires a reachable Base 3 and network discovery must work for the automatic option. This new launch-mode behavior must be tested in a newly built Flatpak; existing published bundles do not contain it.
+Server mode requires a reachable Base 3 and network discovery must work for the automatic option. Client and server modes were validated with PyTrain 2.12.3; verify both again after installing a newer Flatpak.
 
 ## 6. Test in Gaming Mode
 
@@ -153,21 +153,42 @@ Once these checks pass, PyCab is ready to use as a handheld controller.
 
 ## 7. Updating an existing Deck
 
-After a new GitHub Release is published, switch to Desktop Mode and run:
+After a new GitHub Release is **published with downloadable assets**, switch
+to Desktop Mode (or connect over SSH) and run:
 
 ```bash
 cd ~/PyCab-Flatpak
-git pull
-bash install.sh
+git pull --ff-only origin master
+./install-release.sh
 ```
 
-This downloads and installs the latest prebuilt release and refreshes the launcher. The existing Steam shortcut normally requires no changes. Recheck Steam Input and functionality after an update.
+This downloads the latest published bundle and its checksum, verifies SHA-256,
+reinstalls the user Flatpak, and prints the installed PyTrain version. It
+preserves application data and does not change the Steam shortcut. The Deck
+does not need GitHub CLI (`gh`). If the host-side Steam launcher needs to
+be installed or refreshed, run `bash install.sh` separately. Recheck Steam
+Input and functionality after an update.
+
+### Verify the unified cache location (PyTrain 2.12.4+)
+
+The Flatpak launcher sets `PYTRAIN_CACHE_DIR` to the persistent application
+cache root (normally
+`~/.var/app/io.github.cdswindell.PyCab/data/cache`). The cache contains
+`engine_images/`, `engine_info/`, and `config/` for accessory configuration.
+Existing cache contents survive reinstallations. On a new installation,
+PyCab creates the directories as needed.
+
+After installing a release containing PyTrain 2.12.4 or newer, test engine
+images, product information, and configured accessories in both client and
+server modes. If migrating from a development installation that used a
+temporary `~/cache` symlink, remove it **only after** confirming those
+features work from persistent Flatpak storage.
 
 ## 8. Troubleshooting
 
 - **`git clone` says directory already exists:** run `cd ~/PyCab-Flatpak && git pull`, then `bash install.sh`.
-- **Release download fails (HTTP 404):** confirm a published GitHub Release has a `PyCab.flatpak` asset. Repository commits or tags alone do not guarantee a finished bundle.
-- **`flatpak` cannot find a runtime:** check `flatpak remotes`, add Flathub as shown above, and retry.
+- **Release download fails (HTTP 404):** confirm a published GitHub Release has both `PyCab.flatpak` and `PyCab.flatpak.sha256` assets. Repository commits or tags alone do not guarantee a finished bundle.
+- **Checksum verification fails:** do not bypass verification. Retry the download, then check that both release assets belong to the same published release.\n- **`flatpak` cannot find a runtime:** check `flatpak remotes`, add Flathub as shown above, and retry.
 - **GUI works in Konsole but is white in Steam:** verify the Steam shortcut **Target** is `/home/deck/.local/bin/pycab-steam`, **Start In** is `/home/deck/`, and launch options match your chosen mode.
 - **Buttons do not respond:** enable **Steam Input** under the game's Controller override, then relaunch.
 - **Cannot connect to the server:** verify the PyTrain server is running and that Deck/server devices can reach each other on the network. Try a direct connection if discovery is blocked by Wi-Fi isolation.
