@@ -58,6 +58,9 @@ jobs:
       - name: Build bundle
         run: bash build-release.sh
 
+      - name: Package Steam Deck installer
+        run: bash package-installer.sh
+
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
@@ -65,6 +68,7 @@ jobs:
           path: |
             dist/PyCab.flatpak
             dist/PyCab.flatpak.sha256
+            dist/PyCab-Installer.zip
 
       - name: Publish GitHub release assets
         if: startsWith(github.ref, 'refs/tags/v')
