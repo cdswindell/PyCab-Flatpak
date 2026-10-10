@@ -141,9 +141,14 @@ def main():
             backup = path.with_name(f"shortcuts.vdf.backup-{int(time.time())}")
             shutil.copy2(path, backup)
             print(f"Backup: {backup}")
+        # Validate serialization before modifying Steam's shortcut file.
+        serialized = header + encode(entries) + raw[end:]
+        checked, checked_end = parse(serialized, len(header))
+        if checked != entries or serialized[checked_end:] != raw[end:]:
+            sys.exit("Shortcut serialization round-trip failed; no changes made.")
         temp = path.with_name("shortcuts.vdf.pycab-tmp")
         try:
-            temp.write_bytes(header + encode(entries) + raw[end:])
+            temp.write_bytes(serialized)
             os.replace(temp, path)
         finally:
             temp.unlink(missing_ok=True)
