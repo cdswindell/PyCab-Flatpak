@@ -37,7 +37,20 @@ curl --fail --show-error --silent --location --retry 3 -o "$TMP/PyCab.flatpak.sh
 [[ -s "$TMP/PyCab.flatpak" && -s "$TMP/PyCab.flatpak.sha256" ]] || {
   echo "ERROR: Missing bundle or checksum." >&2; exit 1;
 }
-(cd "$TMP" && sha256sum -c PyCab.flatpak.sha256)
+# Older release checksums contain the CI runner's absolute build path.
+# Verify the downloaded bundle by basename, without trusting that path.
+python3 - "$TMP/PyCab.flatpak.sha256" "$TMP/PyCab.flatpak.check" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+line = Path(sys.argv[1]).read_text().strip()
+match = re.fullmatch(r"([0-9a-fA-F]{64})\\s+\\*?(.+)", line)
+if not match or Path(match.group(2)).name != "PyCab.flatpak":
+    sys.exit("ERROR: Invalid PyCab checksum manifest.")
+Path(sys.argv[2]).write_text(f"{match.group(1)}  PyCab.flatpak\\n")
+PY
+(cd "$TMP" && sha256sum -c PyCab.flatpak.check)
 flatpak install --user --reinstall -y "$TMP/PyCab.flatpak"
 flatpak info --user io.github.cdswindell.PyCab
 flatpak run --command=/app/bin/python3 io.github.cdswindell.PyCab -c "from importlib.metadata import version; print('PyTrain:', version('pytrain-ogr-deck'))"
