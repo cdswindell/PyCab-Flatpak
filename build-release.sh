@@ -16,11 +16,26 @@ else
   BUILDER=(flatpak run org.flatpak.Builder)
 fi
 
-"${BUILDER[@]}" \
-  --force-clean \
-  --repo="$REPO" \
-  build-dir \
-  "$APP_ID.yml"
+# Keep the Flatpak Builder source cache between attempts. A transient source
+# download failure should not require re-downloading successful modules.
+MAX_ATTEMPTS=3
+for ((attempt=1; attempt<=MAX_ATTEMPTS; attempt++)); do
+  echo "Flatpak build attempt $attempt/$MAX_ATTEMPTS..."
+  if "${BUILDER[@]}" \
+    --force-clean \
+    --repo="$REPO" \
+    build-dir \
+    "$APP_ID.yml"; then
+    break
+  fi
+  if (( attempt == MAX_ATTEMPTS )); then
+    echo "ERROR: Flatpak build failed after $MAX_ATTEMPTS attempts." >&2
+    exit 1
+  fi
+  delay=$((attempt * 30))
+  echo "Build failed; retrying in ${delay}s..."
+  sleep "$delay"
+done
 
 flatpak build-bundle "$REPO" "$DIST/PyCab.flatpak" "$APP_ID" master
 (cd "$DIST" && sha256sum PyCab.flatpak > PyCab.flatpak.sha256)
