@@ -37,6 +37,7 @@ Installing a published release does **not** build Python, Tcl/Tk, or PyTrain.
    cd PyCab-Flatpak
    ./install-release.sh
    ```
+7. When installation finishes, double-click **Return to Gaming Mode** on the desktop. In Gaming Mode, open **STEAM > Library > Non-Steam** and look for the **PyCab** icon. Select **PyCab**, then **Play**.
 
 For more detail, see [the Steam Deck installation guide](INSTALL_STEAM_DECK.md#1-prepare-the-deck).
 
