@@ -1,7 +1,7 @@
 # PyCab Flatpak
 
 [![Latest Release](https://img.shields.io/github/v/release/cdswindell/PyCab-Flatpak?label=Latest%20Release)](https://github.com/cdswindell/PyCab-Flatpak/releases/latest)
-[![PyTrain Release](https://img.shields.io/github/v/release/cdswindell/PyLegacy?label=PyTrain)](https://github.com/cdswindell/PyLegacy/releases/latest)
+[![PyTrain Version](https://img.shields.io/github/v/tag/cdswindell/PyLegacy?label=PyTrain)](https://github.com/cdswindell/PyLegacy/tags)
 [![Release Build](https://github.com/cdswindell/PyCab-Flatpak/actions/workflows/release.yml/badge.svg)](https://github.com/cdswindell/PyCab-Flatpak/actions/workflows/release.yml)
 
 **New Steam Deck?** Follow [the complete installation guide](INSTALL_STEAM_DECK.md), including optional SSH setup, Flatpak installation, Steam shortcut configuration, and controller testing.
