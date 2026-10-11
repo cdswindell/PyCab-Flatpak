@@ -9,13 +9,18 @@ DEV_WHEELS="$ROOT/dev-wheels"
 
 cd "$ROOT"
 # Optional development override; normal release builds remain pinned to PyPI.
-rm -rf "$DEV_WHEELS"
+if [[ "${PYCAB_PREBUILT_WHEEL:-0}" != "1" ]]; then
+  rm -rf "$DEV_WHEELS"
+fi
 if [[ -n "${PYCAB_PYLEGACY_SOURCE:-}" ]]; then
   SOURCE="$(cd "$PYCAB_PYLEGACY_SOURCE" && pwd)"
   [[ -f "$SOURCE/scripts/build_deck.py" ]] || { echo "Invalid PyLegacy checkout: $SOURCE" >&2; exit 2; }
   mkdir -p "$DEV_WHEELS"
   (cd "$SOURCE" && python3 scripts/build_deck.py --allow-local-version -o "$DEV_WHEELS")
   compgen -G "$DEV_WHEELS/*.whl" >/dev/null || { echo "No Deck wheel produced" >&2; exit 1; }
+fi
+if [[ "${PYCAB_PREBUILT_WHEEL:-0}" == "1" ]]; then
+  compgen -G "$DEV_WHEELS/*.whl" >/dev/null || { echo "Missing prebuilt Deck wheel" >&2; exit 1; }
 fi
 # Embed the exact PyCab release tag (including packaging revision) in the bundle.
 # Local builds may supply PYCAB_RELEASE_TAG explicitly.
