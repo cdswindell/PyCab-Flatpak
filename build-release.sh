@@ -7,6 +7,15 @@ REPO="$ROOT/repo"
 DIST="$ROOT/dist"
 
 cd "$ROOT"
+# Embed the exact PyCab release tag (including packaging revision) in the bundle.
+# Local builds may supply PYCAB_RELEASE_TAG explicitly.
+RELEASE_TAG="${PYCAB_RELEASE_TAG:-${GITHUB_REF_NAME:-}}"
+if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[1-9][0-9]*)?$ ]]; then
+  echo "ERROR: Set PYCAB_RELEASE_TAG=vX.Y.Z[-N] for local builds." >&2
+  exit 2
+fi
+printf '%s\n' "$RELEASE_TAG" > release-tag
+trap 'rm -f "$ROOT/release-tag"' EXIT
 rm -rf "$REPO" "$DIST"
 mkdir -p "$DIST"
 
