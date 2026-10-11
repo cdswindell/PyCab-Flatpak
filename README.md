@@ -111,9 +111,3 @@ persistent Flatpak application storage. Engine images, product metadata,
 and accessory configuration use its `engine_images/`, `engine_info/`,
 and `config/` subdirectories. Raspberry Pi installations without that
 variable retain their existing relative cache paths.
-
-## Digital Dream font
-
-The Flatpak build copies Digital Dream TTF files from the installed `pytrain.gui/fonts` Python package into `/app/share/fonts/truetype/pycab`, refreshes fontconfig, and fails if the font is absent or not recognized. Users do not need to install the font on SteamOS.
-
-**Redistribution permission is pending.** Do not publish a new Flatpak bundle containing Digital Dream until the font author grants permission. Retain the author's written permission and attribution alongside the source font in PyLegacy. The existing PyPI package may already contain the font and should be reviewed for compliance.
