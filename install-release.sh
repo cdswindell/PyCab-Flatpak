@@ -51,6 +51,13 @@ if not match or Path(match.group(2)).name != "PyCab.flatpak":
 Path(sys.argv[2]).write_text(f"{match.group(1)}  PyCab.flatpak\n")
 PY
 (cd "$TMP" && sha256sum -c PyCab.flatpak.check)
+
+# Fresh Steam Decks may not have Flathub or PyCab's required runtime installed.
+echo "Configuring Flathub for the current user..."
+flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+echo "Ensuring PyCab's Freedesktop runtime (26.08) is installed..."
+flatpak install --user -y flathub org.freedesktop.Platform//26.08
+
 flatpak install --user --reinstall -y "$TMP/PyCab.flatpak"
 flatpak info --user io.github.cdswindell.PyCab
 flatpak run --command=/app/bin/python3 io.github.cdswindell.PyCab -c "from importlib.metadata import version; print('PyTrain:', version('pytrain-ogr-deck'))"
