@@ -1,0 +1,73 @@
+name: Build Development Flatpak
+
+on:
+  workflow_dispatch:
+    inputs:
+      pycab_ref:
+        description: "PyCab-Flatpak branch, tag, or commit to build"
+        required: true
+        default: "feature/pycab-flatpak-updates"
+        type: string
+      pylegacy_ref:
+        description: "PyLegacy branch, tag, or commit to package"
+        required: true
+        default: "feature/pycab-flatpak-updates"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  development:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout PyCab Flatpak feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.pycab_ref }}
+          persist-credentials: false
+
+      - name: Checkout PyLegacy development source
+        uses: actions/checkout@v4
+        with:
+          repository: cdswindell/PyLegacy
+          ref: ${{ inputs.pylegacy_ref }}
+          path: pylegacy-source
+          persist-credentials: false
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Build development Deck wheel
+        run: |
+          python -m pip install --upgrade build setuptools-scm
+          mkdir -p dev-wheels
+          (cd pylegacy-source && python scripts/build_deck.py --allow-local-version -o ../dev-wheels)
+          ls -lh dev-wheels/*.whl
+
+      - name: Install Flatpak build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user -y flathub org.freedesktop.Platform//26.08 org.freedesktop.Sdk//26.08
+
+      - name: Build development Flatpak bundle
+        env:
+          PYCAB_PREBUILT_WHEEL: "1"
+          # Deliberately older than the latest release, so the Admin update
+          # indicator can be visually tested without publishing a release.
+          PYCAB_RELEASE_TAG: "v2.12.4-2"
+        run: bash build-release.sh
+
+      - name: Upload development bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: PyCab-development-flatpak
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            dist/PyCab.flatpak
+            dist/PyCab.flatpak.sha256
