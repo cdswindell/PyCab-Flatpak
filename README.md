@@ -9,39 +9,33 @@ the currently packaged release is **2.12.4**.
 
 ## Requirements
 
-- Steam Deck running SteamOS, with internet access and enough free storage for the Flatpak and its runtime.
-- Access to a Lionel Base 3 (server mode) or reachable PyTrain server (client mode).
-- Desktop Mode for exiting Steam during initial installation. The installer itself can run in Konsole or over SSH.
+- Steam Deck running SteamOS with internet access and sufficient storage.
+- Git, curl, Python 3, Flatpak, and SHA-256 tools (normally available on SteamOS).
+- Reachable PyTrain server (client mode) or Lionel Base 3 (server mode).
+- Desktop Mode to exit Steam before the installer edits its library.
 
-No Git checkout, Python virtual environment, Flatpak Builder, or compilation is needed to install a published release.
+Installing a published release does **not** build Python, Tcl/Tk, or PyTrain.
 
 ## Install on a new Steam Deck (recommended)
 
-Download **`PyCab-Installer.zip`** from the [latest GitHub release](https://github.com/cdswindell/PyCab-Flatpak/releases/latest). It contains the prebuilt Flatpak, checksum, launcher, Steam shortcut helper, and artwork.
-
-**First switch to Desktop Mode and fully exit Steam** (Steam > Exit). This matters: Steam can overwrite changes to its shortcuts while running.
-
-On the Deck, in Konsole or via SSH:
+Switch to **Desktop Mode**, choose **Steam > Exit**, and wait until Steam is fully closed. In Konsole on the Deck (or over SSH), run:
 
 ```bash
 cd ~
-curl -fL -o PyCab-Installer.zip https://github.com/cdswindell/PyCab-Flatpak/releases/latest/download/PyCab-Installer.zip
-unzip -o PyCab-Installer.zip
-cd PyCab-Installer
-bash install-bundle.sh
+git clone https://github.com/cdswindell/PyCab-Flatpak.git
+cd PyCab-Flatpak
+./install-release.sh
 ```
 
-The installer verifies the Flatpak's SHA-256 checksum, installs the user Flatpak and host-side launcher, adds PyCab as a **Non-Steam Game**, and installs the custom Steam artwork. It preserves other shortcuts and backs up `shortcuts.vdf` before modifying it. If Steam is still running, it installs the Flatpak but defers shortcut creation and prints the command to run after exiting Steam.
+The script fetches the **latest published GitHub release**, verifies its Flatpak checksum, installs the user Flatpak and host launcher, creates the PyCab non-Steam shortcut, and installs custom Steam artwork. It backs up Steam's shortcuts file and preserves other shortcuts. If Steam is still running, shortcut creation is deferred until you exit Steam and run the command printed by the installer.
 
-Restart Steam or return to Gaming Mode, open **Library > Non-Steam > PyCab**, and select **Play**. Under **Properties > Controller**, enable Steam Input if needed. For client/server launch options and SSH setup, see [INSTALL_STEAM_DECK.md](INSTALL_STEAM_DECK.md).
+Restart Steam or return to Gaming Mode, open **Library > Non-Steam > PyCab**, and select **Play**. Enable Steam Input under **Properties > Controller** if needed. See [INSTALL_STEAM_DECK.md](INSTALL_STEAM_DECK.md) for complete setup, SSH, and client/server options.
 
-**Do not target `/usr/bin/flatpak` directly from Steam.** The installer configures the tested host launcher at `~/.local/bin/pycab-steam`, avoiding the white-window issue seen with a direct Flatpak Steam shortcut.
+**Do not use `/usr/bin/flatpak` as the Steam shortcut target.** The installer configures `~/.local/bin/pycab-steam` to avoid a white Tk window seen with direct Flatpak launches from Steam.
 
-## Update an existing installation
+## Update PyCab when a new release is published
 
-For the simplest update, download the latest installer ZIP and rerun `bash install-bundle.sh` **with Steam exited**. The helper updates an existing PyCab shortcut while preserving its controller settings, and refreshes artwork.
-
-If you maintain a checkout of this repository, the network-based release installer is also supported:
+From Desktop Mode, **exit Steam completely** and run on the Deck (or over SSH):
 
 ```bash
 cd ~/PyCab-Flatpak
@@ -49,7 +43,11 @@ git pull --ff-only origin master
 ./install-release.sh
 ```
 
-`install-release.sh` downloads the latest release's Flatpak and checksum, verifies them, reinstalls the application, refreshes the launcher, and configures the shortcut/artwork when Steam is closed. It requires a repository checkout; the ZIP-based installer does not. Both retain Flatpak application data.
+`git pull` updates the installer and artwork; `install-release.sh` downloads and verifies the latest **published** Flatpak, reinstalls it without deleting application data, and refreshes Steam integration. The existing shortcut and controller settings are preserved. Updates are **manual**, not automatic.
+
+## Alternative: standalone ZIP (no Git)
+
+If you prefer not to clone the repository, download `PyCab-Installer.zip` from the [latest GitHub release](https://github.com/cdswindell/PyCab-Flatpak/releases/latest), extract it, and run `bash install-bundle.sh` inside the extracted `PyCab-Installer` directory. It also verifies the checksum and installs Steam integration. For future updates, download a new ZIP and rerun its installer.
 
 ## Developer installation and removal
 
