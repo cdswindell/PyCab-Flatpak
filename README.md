@@ -33,6 +33,28 @@ Restart Steam or return to Gaming Mode, open **Library > Non-Steam > PyCab**, an
 
 **Do not use `/usr/bin/flatpak` as the Steam shortcut target.** The installer configures `~/.local/bin/pycab-steam` to avoid a white Tk window seen with direct Flatpak launches from Steam.
 
+## Client and server modes
+
+**Recommended: client mode with a dedicated PyTrain server.** Leave Steam's **PyCab > Properties > Shortcut > Launch Options** empty (the default). PyCab then connects to a separate PyTrain server. For the most complete Lionel control setup, run that server on a dedicated computer (such as a Raspberry Pi) connected to **both the Lionel Base 3 over Wi-Fi/network and an LCS Ser2 over USB**. This arrangement avoids relying on the Base 3 alone for functions that require the LCS connection and keeps the Steam Deck focused on being a handheld controller.
+
+**Alternative: run PyCab in server mode on the Steam Deck.** In Steam, open **PyCab > Properties > Shortcut** and set **Launch Options** to:
+
+| Launch Options | Mode |
+| --- | --- |
+| *(empty)* | **Client (recommended):** connect to your separate PyTrain server. |
+| `-base` | **Server:** connect to a Base 3 discovered on the network. |
+| `-base 192.168.4.100` | **Server:** connect to a Base 3 at that IP address (replace with yours). |
+
+The Deck must be able to reach the Base 3; automatic discovery also requires compatible network settings. A Deck running server mode with only a Base 3 connection may not offer the same coverage as a dedicated server with both Base 3 and LCS Ser2 connections.
+
+For a local graphical Konsole test (not over SSH):
+
+```bash
+flatpak run io.github.cdswindell.PyCab              # client mode
+flatpak run io.github.cdswindell.PyCab -base        # server; discover Base 3
+flatpak run io.github.cdswindell.PyCab -base 192.168.4.100  # server; specific Base 3
+```
+
 ## Update PyCab when a new release is published
 
 From Desktop Mode, **exit Steam completely** and run on the Deck (or over SSH):
