@@ -24,7 +24,7 @@ Installing a published release does **not** build Python, Tcl/Tk, or PyTrain.
 1. From **Gaming Mode**, press the physical **STEAM** button on the left side of the Deck.
 2. Select **Power**, then **Switch to Desktop**.
    
-   ![Steam Deck Power menu showing Switch to Desktop](docs/images/switch-to-desktop.jpg)
+   <img src="docs/images/switch-to-desktop.jpg" alt="Steam Deck Power menu showing Switch to Desktop" width="360">
 
 3. Wait for the KDE desktop to appear.
 4. Open the Steam desktop app's **Steam** menu and select **Exit**; wait until Steam has fully closed.
