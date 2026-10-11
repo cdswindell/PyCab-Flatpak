@@ -6,9 +6,10 @@ This guide installs the **prebuilt PyCab Flatpak** as a Lionel/PyTrain controlle
 
 1. Complete initial SteamOS setup, sign in to Steam, connect to Wi-Fi, and let SteamOS finish updates.
 2. While in **Gaming Mode**, press the physical **STEAM** button on the left side of the Steam Deck.
-3. Select **Power**, then **Switch to Desktop**. Wait for the KDE desktop to load. This is the Linux desktop, not a separate SteamOS installation.
-4. Click or tap the **application launcher** at the bottom-left of the desktop and open **Konsole** (the terminal). You can use the touchscreen, trackpads, or a connected keyboard/mouse. All shell commands below run as the default `deck` user; **do not run them with sudo**.
-5. Confirm networking and tools:
+3. Select **Power**.
+4. Select **Switch to Desktop** and wait for the KDE desktop to load. This is the Linux desktop, not a separate SteamOS installation.
+5. Click or tap the **application launcher** at the bottom-left of the desktop and open **Konsole** (the terminal). You can use the touchscreen, trackpads, or a connected keyboard/mouse. All shell commands below run as the default `deck` user; **do not run them with sudo**.
+6. Confirm networking and tools:
 
    ```bash
    whoami                  # normally deck
