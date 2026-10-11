@@ -129,29 +129,29 @@ For a separate graphical Desktop Mode test (not over SSH), run:
 flatpak run io.github.cdswindell.PyCab
 ```
 
-Verify PyCab can connect to your PyTrain server or Base 3, as appropriate. Client and server modes have both been tested on the Steam Deck.
+Verify PyCab can connect to your PyTrain server or Base 3, as appropriate. Client and server modes have both been tested on the Steam Deck; see the recommended architecture and server-mode options below.
 
-## Select client or server mode using Steam Launch Options
+## Client and server modes
 
-One PyCab installation supports both operating modes. In Steam Desktop Mode, open **PyCab > Properties > Shortcut** and edit **Launch Options**:
+**Recommended: client mode with a dedicated PyTrain server.** Leave Steam's **PyCab > Properties > Shortcut > Launch Options** empty (the default). PyCab then connects to a separate PyTrain server. For the most complete Lionel control setup, run that server on a dedicated computer (such as a Raspberry Pi) connected to **both the Lionel Base 3 over Wi-Fi/network and an LCS Ser2 over USB**. This arrangement avoids relying on the Base 3 alone for functions that require the LCS connection and keeps the Steam Deck focused on being a handheld controller.
 
-| Launch Options | Behavior |
+**Alternative: run PyCab in server mode on the Steam Deck.** In Steam, open **PyCab > Properties > Shortcut** and set **Launch Options** to:
+
+| Launch Options | Mode |
 | --- | --- |
-| *(empty)* | Existing client mode; connects to a separate PyTrain server. |
-| `-base` | Server mode; PyTrain discovers the Base 3 automatically. |
-| `-base 192.168.4.100` | Server mode; PyTrain uses the specified Base 3 address (replace with yours). |
+| *(empty)* | **Client (recommended):** connect to your separate PyTrain server. |
+| `-base` | **Server:** connect to a Base 3 discovered on the network. |
+| `-base 192.168.4.100` | **Server:** connect to a Base 3 at that IP address (replace with yours). |
 
-The launcher passes PyTrain's native `-base` option (with an optional IP address) for server mode, or uses `-client` when no `-base` option is supplied.
+The Deck must be able to reach the Base 3; automatic discovery also requires compatible network settings. A Deck running server mode with only a Base 3 connection may not offer the same coverage as a dedicated server with both Base 3 and LCS Ser2 connections.
 
-For command-line testing:
+For a local graphical Konsole test (not over SSH):
 
 ```bash
-flatpak run io.github.cdswindell.PyCab
-flatpak run io.github.cdswindell.PyCab -base
-flatpak run io.github.cdswindell.PyCab -base 192.168.4.100
+flatpak run io.github.cdswindell.PyCab              # client mode
+flatpak run io.github.cdswindell.PyCab -base        # server; discover Base 3
+flatpak run io.github.cdswindell.PyCab -base 192.168.4.100  # server; specific Base 3
 ```
-
-Server mode requires a reachable Base 3 and network discovery must work for the automatic option. Client and server modes were validated with PyTrain 2.12.3; verify both again after installing a newer Flatpak.
 
 ## 6. Updating an existing Deck
 
