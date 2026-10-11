@@ -60,9 +60,18 @@ gh run list --repo cdswindell/PyCab-Flatpak --workflow release.yml --limit 5
 
 ## Install or update on Steam Deck
 
-**Recommended for new users:** Download the latest release's `PyCab-Installer.zip` and run `bash install-bundle.sh` from its extracted `PyCab-Installer/` directory. Exit Steam fully first. This installs the Flatpak, creates the Steam Library shortcut, and installs all custom artwork without requiring a Git checkout. See [INSTALL_STEAM_DECK.md](INSTALL_STEAM_DECK.md).
+**Recommended for new users and future updates:** Keep a Git checkout of the packaging repository on the Deck. This allows users to update installation scripts and artwork with `git pull` before installing the latest published Flatpak.
 
-For maintainers with an existing checkout, the network-based installer is also supported:
+First installation (switch to Desktop Mode and **exit Steam** first):
+
+```bash
+cd ~
+git clone https://github.com/cdswindell/PyCab-Flatpak.git
+cd PyCab-Flatpak
+./install-release.sh
+```
+
+Subsequent updates (exit Steam first):
 
 ```bash
 cd ~/PyCab-Flatpak
@@ -70,9 +79,11 @@ git pull --ff-only origin master
 ./install-release.sh
 ```
 
-It downloads the latest published Flatpak and checksum, verifies SHA-256, reinstalls the user Flatpak, prints the installed PyTrain version, refreshes the host launcher, and invokes Steam shortcut/artwork integration when Steam is stopped. GitHub CLI is **not** required on the Deck. It supports legacy release checksum manifests containing an absolute CI path.
+`install-release.sh` fetches the latest published release Flatpak and checksum, verifies SHA-256, reinstalls the user Flatpak, reports its PyTrain version, refreshes the host launcher, and installs/updates the Steam shortcut and artwork when Steam is stopped. It supports legacy checksum manifests containing an absolute CI path. GitHub CLI is **not** needed on the Deck, and no compilation is involved.
 
-The Flatpak app may be installed over SSH. Steam must be exited for automatic shortcut creation; run the GUI in a local graphical Deck session, not SSH.
+**Alternative without Git:** Download `PyCab-Installer.zip` from the latest release and run `bash install-bundle.sh` from its extracted directory. Repeat the download for future updates.
+
+The Flatpak can be installed over SSH, but Steam must be exited for shortcut changes and the GUI must be launched from a local graphical session. See [INSTALL_STEAM_DECK.md](INSTALL_STEAM_DECK.md).
 
 ## Cache layout
 
@@ -96,12 +107,12 @@ accessory configuration paths have been verified without it.
 
 ## Script reference
 
-The scripts below are in the repository root unless a subdirectory is shown. **Normal users should use the release ZIP and `install-bundle.sh`**, not the developer build tools.
+The scripts below are in the repository root unless a subdirectory is shown. **Normal users should clone the repository and use `install-release.sh`**; the release ZIP is an alternative without Git.
 
 | Script | Runs on | Purpose |
 | --- | --- | --- |
-| `install-bundle.sh` | Steam Deck (Desktop Mode/SSH) | **Recommended release ZIP installer.** Verifies bundled SHA-256, installs/reinstalls the user Flatpak, installs host launcher, creates or refreshes Steam shortcut and artwork if Steam is closed. |
-| `install-release.sh` | Steam Deck (repository checkout) | Fetches latest published Flatpak and checksum from GitHub Releases, verifies, installs, reports PyTrain version, refreshes launcher and Steam integration. |
+| `install-bundle.sh` | Steam Deck (Desktop Mode/SSH) | Standalone release ZIP installer (no Git). Verifies bundled SHA-256, installs/reinstalls the user Flatpak, installs host launcher, creates or refreshes Steam shortcut and artwork if Steam is closed. |
+| `install-release.sh` | Steam Deck (repository checkout) | **Recommended initial install/update.** Fetches latest published Flatpak and checksum from GitHub Releases, verifies, installs, reports PyTrain version, refreshes launcher and Steam integration. |
 | `install.sh` | Steam Deck (repository checkout) | Alternative development installer: downloads latest Flatpak by default; `--build` builds/installs from source with Flatpak Builder. **Default download does not verify a checksum**; prefer the two installers above. |
 | `uninstall.sh` | Steam Deck (repository checkout) | Removes user Flatpak and host launcher; retains app data; instructs user to remove Steam shortcut manually. |
 | `pycab-steam` | Steam Deck (Steam launcher) | Host-side shell launcher for `flatpak run io.github.cdswindell.PyCab`; Steam shortcut targets this file to avoid white Tk windows. |
