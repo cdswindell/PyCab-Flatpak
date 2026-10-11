@@ -112,6 +112,7 @@ modules:
                 copy2(path, destination)
                 print(f"Installed PyCab icon: {destination}")
         PY
+      - install -Dm644 release-tag /app/share/pycab/release-tag
       - install -Dm755 pycab-flatpak /app/bin/pycab-flatpak
       - install -Dm644 buttons.py /app/share/pycab/buttons.py
       - install -Dm644 io.github.cdswindell.PyCab.desktop /app/share/applications/io.github.cdswindell.PyCab.desktop
