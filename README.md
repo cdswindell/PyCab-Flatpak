@@ -19,7 +19,15 @@ Installing a published release does **not** build Python, Tcl/Tk, or PyTrain.
 
 ## Install on a new Steam Deck (recommended)
 
-**Switch to Desktop Mode:** From **Gaming Mode**, press the physical **STEAM** button on the left side of the Deck, select **Power**, then select **Switch to Desktop**. Wait for the KDE desktop to appear. Open the application launcher in the lower-left corner and launch **Konsole**. Before installing, open the Steam desktop app's **Steam** menu and select **Exit**; wait until Steam has fully closed. For more detail, see [the Steam Deck installation guide](INSTALL_STEAM_DECK.md#1-prepare-the-deck).
+**Switch to Desktop Mode:**
+
+1. From **Gaming Mode**, press the physical **STEAM** button on the left side of the Deck.
+2. Select **Power**, then **Switch to Desktop**.
+3. Wait for the KDE desktop to appear.
+4. Open the application launcher in the lower-left corner and launch **Konsole**.
+5. Before installing, open the Steam desktop app's **Steam** menu and select **Exit**; wait until Steam has fully closed.
+
+For more detail, see [the Steam Deck installation guide](INSTALL_STEAM_DECK.md#1-prepare-the-deck).
 
 In Konsole on the Deck (or over SSH), run:
 
