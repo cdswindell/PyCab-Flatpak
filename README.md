@@ -19,8 +19,6 @@ Installing a published release does **not** build Python, Tcl/Tk, or PyTrain.
 
 ## Install on a new Steam Deck (recommended)
 
-**Switch to Desktop Mode:**
-
 1. From **Gaming Mode**, press the physical **STEAM** button on the left side of the Deck.
 2. Select **Power**, then **Switch to Desktop**.
    
