@@ -2,10 +2,7 @@
 
 **New Steam Deck?** Follow [the complete installation guide](INSTALL_STEAM_DECK.md), including optional SSH setup, Flatpak installation, Steam shortcut configuration, and controller testing.
 
-Steam Deck Flatpak packaging for PyCab, the PyTrain controller. The Flatpak
-installs the `pytrain-ogr-deck` Python distribution rather than building
-PyLegacy source. The release automation pins the PyTrain version in `requirements-lock.txt`;
-the currently packaged release is **2.12.4**.
+Steam Deck Flatpak packaging for PyCab, the controller for [PyTrain (PyLegacy)](https://github.com/cdswindell/PyLegacy). The Flatpak installs the `pytrain-ogr-deck` Python distribution rather than building PyLegacy source. Each release pins its PyTrain version in `requirements-lock.txt`. See the [latest published PyCab release](https://github.com/cdswindell/PyCab-Flatpak/releases/latest) for the current release.
 
 ## Requirements
 
