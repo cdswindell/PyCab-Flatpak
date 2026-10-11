@@ -11,7 +11,7 @@ the currently packaged release is **2.12.4**.
 
 - Steam Deck in Desktop Mode with internet access.
 - Flatpak and Git (provided by SteamOS).
-- Access to your PyTrain server on the network.
+- Access to your Lionel Base 3 or PyTrain server on the network.
 
 Flatpak Builder is needed only for the optional developer source build (`bash install.sh --build`), not for installing a published release.
 
