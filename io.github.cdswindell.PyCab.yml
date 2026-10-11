@@ -65,6 +65,8 @@ modules:
         - --share=network
     build-commands:
       - /app/bin/python3 -m pip install --prefix=/app --no-cache-dir --no-deps -r requirements-lock.txt
+      # Optional local Deck wheel for feature-branch testing.
+      - /bin/sh -c 'set -- dev-wheels/*.whl; if [ -f "$1" ]; then /app/bin/python3 -m pip install --prefix=/app --no-cache-dir --no-deps --force-reinstall "$1"; fi'
       - /app/bin/python3 -c "from importlib.metadata import version; print('PyCab PyTrain version:', version('pytrain-ogr-deck'))"
       # Install packaged Digital Dream fonts into Flatpak's fontconfig search path.
       # Fail rather than silently ship a UI with substituted fonts.
