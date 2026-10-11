@@ -1,8 +1,11 @@
 # PyCab Flatpak
 
+[![Latest Release](https://img.shields.io/github/v/release/cdswindell/PyCab-Flatpak?label=Latest%20Release)](https://github.com/cdswindell/PyCab-Flatpak/releases/latest)
+[![Release Build](https://github.com/cdswindell/PyCab-Flatpak/actions/workflows/release.yml/badge.svg)](https://github.com/cdswindell/PyCab-Flatpak/actions/workflows/release.yml)
+
 **New Steam Deck?** Follow [the complete installation guide](INSTALL_STEAM_DECK.md), including optional SSH setup, Flatpak installation, Steam shortcut configuration, and controller testing.
 
-Steam Deck Flatpak packaging for PyCab, the controller for [PyTrain (PyLegacy)](https://github.com/cdswindell/PyLegacy). The Flatpak installs the `pytrain-ogr-deck` Python distribution rather than building PyLegacy source. Each release pins its PyTrain version in `requirements-lock.txt`. See the [latest published PyCab release](https://github.com/cdswindell/PyCab-Flatpak/releases/latest) for the current release.
+Steam Deck Flatpak packaging for PyCab, the controller for [PyTrain (PyLegacy)](https://github.com/cdswindell/PyLegacy). The Flatpak installs the `pytrain-ogr-deck` Python distribution rather than building PyLegacy source. See the [latest published PyCab release](https://github.com/cdswindell/PyCab-Flatpak/releases/latest) for the current release.
 
 ## Requirements
 
