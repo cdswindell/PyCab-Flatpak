@@ -10,6 +10,10 @@ cd "$ROOT"
 # Embed the exact PyCab release tag (including packaging revision) in the bundle.
 # Local builds may supply PYCAB_RELEASE_TAG explicitly.
 RELEASE_TAG="${PYCAB_RELEASE_TAG:-${GITHUB_REF_NAME:-}}"
+if [[ -z "$RELEASE_TAG" ]]; then
+  # Keep the existing local build workflow working without extra arguments.
+  RELEASE_TAG="v$(sed -n 's/^pytrain-ogr-deck==//p' requirements-lock.txt)"
+fi
 if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[1-9][0-9]*)?$ ]]; then
   echo "ERROR: Set PYCAB_RELEASE_TAG=vX.Y.Z[-N] for local builds." >&2
   exit 2
