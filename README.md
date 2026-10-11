@@ -24,19 +24,18 @@ Installing a published release does **not** build Python, Tcl/Tk, or PyTrain.
 1. From **Gaming Mode**, press the physical **STEAM** button on the left side of the Deck.
 2. Select **Power**, then **Switch to Desktop**.
 3. Wait for the KDE desktop to appear.
-4. Open the application launcher in the lower-left corner and launch **Konsole**.
-5. Before installing, open the Steam desktop app's **Steam** menu and select **Exit**; wait until Steam has fully closed.
+4. Open the Steam desktop app's **Steam** menu and select **Exit**; wait until Steam has fully closed.
+5. Open the application launcher in the lower-left corner and launch **Konsole**.
+6. In Konsole on the Deck (or over SSH), run:
+
+   ```bash
+   cd ~
+   git clone https://github.com/cdswindell/PyCab-Flatpak.git
+   cd PyCab-Flatpak
+   ./install-release.sh
+   ```
 
 For more detail, see [the Steam Deck installation guide](INSTALL_STEAM_DECK.md#1-prepare-the-deck).
-
-In Konsole on the Deck (or over SSH), run:
-
-```bash
-cd ~
-git clone https://github.com/cdswindell/PyCab-Flatpak.git
-cd PyCab-Flatpak
-./install-release.sh
-```
 
 The script fetches the **latest published GitHub release**, verifies its Flatpak checksum, installs the user Flatpak and host launcher, creates the PyCab non-Steam shortcut, and installs custom Steam artwork. It backs up Steam's shortcuts file and preserves other shortcuts. If Steam is still running, shortcut creation is deferred until you exit Steam and run the command printed by the installer.
 
