@@ -132,6 +132,44 @@ Do not remove any legacy cache symlink used during development until the
 newly built Flatpak has been installed and the image, product metadata, and
 accessory configuration paths have been verified without it.
 
+## Persistent runtime logs and files
+
+The Flatpak launcher changes PyTrain's working directory to persistent
+application data **before** starting Python:
+
+```text
+~/.var/app/io.github.cdswindell.PyCab/data/runtime/
+    pytrain.log
+    pytrain.log.1
+    pytrain.log.2
+    pytrain.log.3
+    pytrain.log.4
+```
+
+PyTrain's default logger writes `pytrain.log` relative to the working
+directory. On startup it rotates an existing log to `.1` and keeps up to
+four backups. The log therefore remains available **during execution and
+after PyCab exits**, including after Flatpak updates. The directory is on
+the Steam Deck host, outside the sandbox's ephemeral filesystem.
+
+```bash
+# Steam Deck (SSH or Desktop Konsole):
+tail -f ~/.var/app/io.github.cdswindell.PyCab/data/runtime/pytrain.log
+ls -lah ~/.var/app/io.github.cdswindell.PyCab/data/runtime/
+```
+
+PyTrain's `.pytrain.history` is also a working-directory-relative file,
+but **PyCab runs PyTrain with `-headless`**, and the PyTrain CLI writes
+readline history only in interactive mode. Thus the directory is ready for
+history if that mode is used, but a normal PyCab session does **not**
+produce `.pytrain.history`.
+
+This affects new Flatpak builds only: installing an older already-published
+Flatpak does not change its embedded launcher. The existing
+`PYTRAIN_CACHE_DIR` layout is unchanged. The runtime directory is not
+deleted by a normal application exit or reinstall; deleting Flatpak app
+data explicitly would remove it.
+
 ## Environment rules
 
 - Publish: macOS only; requires Git, GitHub CLI (`gh`), curl, and Python 3.
@@ -384,6 +422,9 @@ PYCAB_PYLEGACY_SOURCE=/path/to/PyLegacy PYCAB_RELEASE_TAG=v2.12.9-1 ./build-rele
   `cache/engine_images`, `cache/engine_info`, and `cache/config`.
 - **`PYTRAIN_CACHE_DIR`**: Set to that cache root's `cache` directory,
   shared by client and server modes. An inherited value is overwritten.
+- **Working directory**: Changed to persistent `runtime/` beneath the same
+  application data root before launching Python, so `pytrain.log` survives
+  restarts and is accessible from the Steam Deck host.
 - Both modes invoke `/app/bin/pytrain -headless` and load
   `/app/share/pycab/buttons.py`. These are runtime launch options, not
   switches for building or publishing PyCab.
