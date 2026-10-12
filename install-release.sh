@@ -61,11 +61,41 @@ flatpak install --user -y flathub org.freedesktop.Platform//26.08
 flatpak install --user --reinstall -y "$TMP/PyCab.flatpak"
 flatpak info --user io.github.cdswindell.PyCab
 flatpak run --command=/app/bin/python3 io.github.cdswindell.PyCab -c "from importlib.metadata import version; print('PyTrain:', version('pytrain-ogr-deck'))"
-install -Dm755 "$ROOT/pycab-steam" "$HOME/.local/bin/pycab-steam"
+# Use the host launcher packaged with the installed release.
+LAUNCHER_TMP="$TMP/pycab-steam"
+flatpak run --command=cat io.github.cdswindell.PyCab /app/share/pycab/pycab-steam > "$LAUNCHER_TMP"
+[[ -s "$LAUNCHER_TMP" ]] || { echo "ERROR: Bundled host launcher missing." >&2; exit 1; }
+install -Dm755 "$LAUNCHER_TMP" "$HOME/.local/bin/pycab-steam"
 if pgrep -x steam >/dev/null 2>&1; then
   echo "Steam is running; exit Steam completely, then run:"
   echo "  python3 $ROOT/scripts/install-steam-shortcut.py"
 else
   python3 "$ROOT/scripts/install-steam-shortcut.py"
+fi
+echo
+echo "Verifying PyCab installation..."
+APP_ID=io.github.cdswindell.PyCab
+flatpak info --user "$APP_ID" >/dev/null
+flatpak info --user org.freedesktop.Platform//26.08 >/dev/null
+INSTALLED_TAG="$(flatpak run --command=cat "$APP_ID" /app/share/pycab/release-tag)"
+EXPECTED_TAG="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["tag_name"])' "$TMP/release.json")"
+[[ "$INSTALLED_TAG" == "$EXPECTED_TAG" ]] || {
+  echo "ERROR: Installed release $INSTALLED_TAG does not match downloaded $EXPECTED_TAG" >&2; exit 1;
+}
+flatpak run --command=grep "$APP_ID" -q 'RUNTIME_DIR=' /app/bin/pycab-flatpak || {
+  echo "ERROR: Flatpak launcher missing persistent runtime setup." >&2; exit 1;
+}
+[[ -x "$HOME/.local/bin/pycab-steam" ]] || {
+  echo "ERROR: Host launcher missing or not executable." >&2; exit 1;
+}
+cmp -s "$LAUNCHER_TMP" "$HOME/.local/bin/pycab-steam" || {
+  echo "ERROR: Host launcher differs from installed release." >&2; exit 1;
+}
+echo "Verified: release $INSTALLED_TAG, runtime 26.08, Flatpak entry point and host launcher."
+flatpak run --command=cat "$APP_ID" /app/share/pycab/build-info
+if ! pgrep -x steam >/dev/null 2>&1; then
+  python3 "$ROOT/scripts/install-steam-shortcut.py" --dry-run
+else
+  echo "Steam shortcut verification deferred until Steam exits."
 fi
 echo "Installed. Launch in Steam Gaming Mode or a local Deck desktop console."
