@@ -147,9 +147,9 @@ scripts are supporting build tools or alternative installation methods.
 
 | Script | Run on | When to use it |
 | --- | --- | --- |
-| **① `build-dev.sh`** | 🍎 **Mac** | Build an **unpublished development Flatpak** for integration testing. |
-| **② `publish-release.sh`** | 🍎 **Mac** | Publish a **production release** (or packaging-only rebuild with `--rebuild`). |
-| **③ `install-release.sh`** | 🎮 **Steam Deck** | **Install or update the published Flatpak** on the Deck. |
+| **① [`build-dev.sh`](#build-dev)** | 🍎 **Mac** | Build an **unpublished development Flatpak** for integration testing. |
+| **② [`publish-release.sh`](#publish-release)** | 🍎 **Mac** | Publish a **production release** (or packaging-only rebuild with `--rebuild`). |
+| **③ [`install-release.sh`](#install-release)** | 🎮 **Steam Deck** | **Install or update the published Flatpak** on the Deck. |
 
 **For routine source changes**, prefer the Conda-first workflow described
 above: push PyLegacy changes from the Mac and update the Conda checkout on
