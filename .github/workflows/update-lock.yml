@@ -20,7 +20,7 @@ jobs:
   lock:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: "3.14.8"
@@ -42,7 +42,7 @@ jobs:
           } > requirements-lock.txt
           grep -Fx "pytrain-ogr-deck==$VERSION" requirements-lock.txt
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: requirements-lock
           path: requirements-lock.txt
