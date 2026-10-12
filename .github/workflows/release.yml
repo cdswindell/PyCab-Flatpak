@@ -17,18 +17,24 @@ jobs:
 
       - name: Validate release lock and PyPI package
         run: |
-          RELEASE_VERSION="${GITHUB_REF_NAME#v}"
-          VERSION="${RELEASE_VERSION%%-*}"
-          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[1-9][0-9]*)?$ ]]; then
-            echo "::error::Unsupported PyCab release tag: $GITHUB_REF_NAME"
-            exit 1
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            RELEASE_VERSION="${GITHUB_REF_NAME#v}"
+            if [[ ! "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[1-9][0-9]*)?$ ]]; then
+              echo "::error::Unsupported PyCab release tag: ${GITHUB_REF_NAME}"
+              exit 1
+            fi
+            VERSION="${RELEASE_VERSION%%-*}"
+          else
+            # Manual branch builds validate the pinned package, not a release tag.
+            VERSION="$(sed -n 's/^pytrain-ogr-deck==//p' requirements-lock.txt)"
+            echo "Non-release build on ${GITHUB_REF_NAME}; validating pinned PyTrain ${VERSION}."
           fi
           LOCKED_VERSION="$(sed -n 's/^pytrain-ogr-deck==//p' requirements-lock.txt)"
           if [[ -z "$LOCKED_VERSION" ]]; then
             echo "::error::requirements-lock.txt does not contain pytrain-ogr-deck."
             exit 1
           fi
-          if [[ "$LOCKED_VERSION" != "$VERSION" ]]; then
+          if [[ -z "$VERSION" || "$LOCKED_VERSION" != "$VERSION" ]]; then
             echo "::error::Release tag $GITHUB_REF_NAME does not match locked pytrain-ogr-deck==$LOCKED_VERSION."
             echo "::error::Run ./update-lock.sh $VERSION, test the resulting Flatpak, commit the lock, then tag the release."
             exit 1
@@ -48,15 +54,51 @@ jobs:
           echo "::error::pytrain-ogr-deck==$VERSION is not available on PyPI."
           exit 1
 
+      # Cache the user Flatpak installation containing Platform and SDK.
+      # Keep apt installation separate: executables belong to the runner OS.
+      - name: Restore Flatpak SDK and runtime
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/flatpak
+          key: flatpak-sdk-ubuntu2404-x86_64-26.08-v1
+          
       - name: Install Flatpak
         run: |
           sudo apt-get update
           sudo apt-get install -y flatpak flatpak-builder
           flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y flathub org.freedesktop.Platform//26.08 org.freedesktop.Sdk//26.08
+          if flatpak info --user org.freedesktop.Platform//26.08 >/dev/null 2>&1 &&
+             flatpak info --user org.freedesktop.Sdk//26.08 >/dev/null 2>&1; then
+            echo "Flatpak SDK and runtime restored from cache."
+          else
+            flatpak install --user -y flathub org.freedesktop.Platform//26.08 org.freedesktop.Sdk//26.08
+          fi
+
+      # flatpak-builder stores downloaded sources and completed module builds here.
+      # GitHub runners are ephemeral, so persist the cache between release runs.
+      # A unique key saves the refreshed cache on each run; restore-keys selects
+      # the newest compatible cache. flatpak-builder validates module inputs.
+      - name: Restore Flatpak Builder cache
+        uses: actions/cache@v4
+        with:
+          path: .flatpak-builder
+          key: flatpak-builder-ubuntu2404-x86_64-${{ hashFiles('io.github.cdswindell.PyCab.yml') }}-${{ github.run_id }}
+          restore-keys: |
+            flatpak-builder-ubuntu2404-x86_64-${{ hashFiles('io.github.cdswindell.PyCab.yml') }}-
+            flatpak-builder-ubuntu2404-x86_64-
 
       - name: Build bundle
-        run: bash build-release.sh
+        env:
+          # Branch workflow_dispatch runs have no release tag; use the pinned
+          # PyTrain version to generate a valid local bundle metadata tag.
+          PYCAB_RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+        run: |
+          if [[ -z "$PYCAB_RELEASE_TAG" ]]; then
+            VERSION="$(sed -n 's/^pytrain-ogr-deck==//p' requirements-lock.txt)"
+            [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Invalid pinned PyTrain version: $VERSION"; exit 1; }
+            export PYCAB_RELEASE_TAG="v$VERSION"
+          fi
+          bash build-release.sh
 
       - name: Package Steam Deck installer
         run: bash package-installer.sh
