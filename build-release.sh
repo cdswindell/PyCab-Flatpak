@@ -46,7 +46,9 @@ if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[1-9][0-9]*)?$ ]]; then
   exit 2
 fi
 printf '%s\n' "$RELEASE_TAG" > release-tag
-trap 'rm -f "$ROOT/release-tag"; rm -rf "$DEV_WHEELS"' EXIT
+PYTRAIN_VERSION="$(sed -n 's/^pytrain-ogr-deck==//p' requirements-lock.txt)"
+printf 'PyCab Release: %s\nPyTrain Version: %s\nFlatpak Runtime: 26.08\nInstallation: User\nPlatform: Steam Deck\n' "$RELEASE_TAG" "$PYTRAIN_VERSION" > build-info
+trap 'rm -f "$ROOT/release-tag" "$ROOT/build-info"; rm -rf "$DEV_WHEELS"' EXIT
 rm -rf "$REPO" "$DIST"
 mkdir -p "$DIST"
 
