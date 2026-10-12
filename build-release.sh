@@ -81,8 +81,11 @@ done
 phase_end "Flatpak Builder (includes module builds and Prune Cache)"
 phase_start "Flatpak bundle export"
 flatpak build-bundle "$REPO" "$DIST/PyCab.flatpak" "$APP_ID" master
-(cd "$DIST" && sha256sum PyCab.flatpak > PyCab.flatpak.sha256)
 phase_end "Flatpak bundle export"
+echo "Bundle size: $(du -h "$DIST/PyCab.flatpak" | cut -f1)"
+phase_start "SHA-256 checksum"
+(cd "$DIST" && sha256sum PyCab.flatpak > PyCab.flatpak.sha256)
+phase_end "SHA-256 checksum"
 echo "TOTAL build-release.sh elapsed: $((SECONDS - BUILD_STARTED))s"
 
 echo "Created:"
