@@ -33,6 +33,8 @@ jobs:
           repository: cdswindell/PyLegacy
           ref: ${{ inputs.pylegacy_ref }}
           path: pylegacy-source
+          fetch-depth: 0
+          fetch-tags: true
           persist-credentials: false
 
       - name: Set up Python 3.14
@@ -46,6 +48,17 @@ jobs:
           mkdir -p dev-wheels
           (cd pylegacy-source && python scripts/build_deck.py --allow-local-version -o ../dev-wheels)
           ls -lh dev-wheels/*.whl
+          python - <<'PY'
+          from pathlib import Path
+          from packaging.version import Version
+          wheels = list(Path("dev-wheels").glob("pytrain_ogr_deck-*.whl"))
+          if len(wheels) != 1:
+              raise SystemExit(f"Expected one development wheel, found {len(wheels)}")
+          version = Version(wheels[0].name.split("-")[1])
+          if version.release[:2] == (0, 0) or len(version.release) < 3:
+              raise SystemExit(f"Invalid development wheel version: {version}. Check git tags and checkout depth.")
+          print(f"Validated development wheel version: {version}")
+          PY
 
       - name: Install Flatpak build dependencies
         run: |
