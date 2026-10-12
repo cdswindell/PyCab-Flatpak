@@ -104,7 +104,7 @@ jobs:
         run: bash package-installer.sh
 
       - name: Upload workflow artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: PyCab-flatpak
           path: |
