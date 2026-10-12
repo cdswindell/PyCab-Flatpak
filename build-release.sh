@@ -79,8 +79,19 @@ for ((attempt=1; attempt<=MAX_ATTEMPTS; attempt++)); do
 done
 
 phase_end "Flatpak Builder (includes module builds and Prune Cache)"
+# Profile bundle export before changing compression or artifact format.
+# GNU time reports CPU utilization and peak RSS so we can distinguish
+# CPU-bound compression from I/O or memory pressure on GitHub runners.
 phase_start "Flatpak bundle export"
-flatpak build-bundle "$REPO" "$DIST/PyCab.flatpak" "$APP_ID" master
+if [[ -x /usr/bin/time ]]; then
+  /usr/bin/time -v -o "$DIST/bundle-export-time.txt" \
+    flatpak build-bundle "$REPO" "$DIST/PyCab.flatpak" "$APP_ID" master
+  echo "Bundle export resource profile:"
+  grep -E 'User time|System time|Percent of CPU|Elapsed \(wall clock\)|Maximum resident set size|File system inputs|File system outputs' \
+    "$DIST/bundle-export-time.txt" || cat "$DIST/bundle-export-time.txt"
+else
+  flatpak build-bundle "$REPO" "$DIST/PyCab.flatpak" "$APP_ID" master
+fi
 phase_end "Flatpak bundle export"
 echo "Bundle size: $(du -h "$DIST/PyCab.flatpak" | cut -f1)"
 phase_start "SHA-256 checksum"
