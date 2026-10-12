@@ -11,6 +11,7 @@ import time
 import zlib
 
 APP = "PyCab"
+COLLISION_NAME = "PyCab (Flatpak)"
 APP_ID = "io.github.cdswindell.PyCab"
 HOME = Path.home()
 LAUNCHER = HOME / ".local/bin/pycab-steam"
@@ -75,6 +76,14 @@ def shortcut_id(exe, name):
     return (zlib.crc32((exe + name).encode("utf-8")) | 0x80000000) & 0xffffffff
 
 
+def is_flatpak_shortcut(fields):
+    """Match the Flatpak launcher rather than an unrelated shortcut's name."""
+    exe = (string(fields, "exe") or "").strip().strip('"')
+    options = string(fields, "LaunchOptions") or ""
+    return (exe == str(LAUNCHER)
+            or ("flatpak" in exe.lower() and APP_ID in (exe + " " + options)))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
@@ -98,10 +107,10 @@ def main():
         entries, end = parse(raw, len(header))
         if raw[end:] not in (b"", bytes([8])) or any(kind != 0 for kind, _, _ in entries):
             raise ValueError("Unexpected shortcut structure")
-        matches = [(key, fields) for _, key, fields in entries
-                   if string(fields, "appname") == APP]
+        matches = [(key, fields) for _, key, fields in entries if is_flatpak_shortcut(fields)]
         if len(matches) > 1:
-            raise ValueError("Multiple PyCab shortcuts found; no changes made")
+            raise ValueError("Multiple Flatpak PyCab shortcuts found; no changes made")
+        existing_names = {string(fields, "appname") for _, _, fields in entries}
     except ValueError as exc:
         sys.exit(f"Cannot safely edit Steam shortcuts: {exc}")
 
@@ -110,19 +119,22 @@ def main():
         appid_field = next((value for kind, key, value in fields
                             if kind == 2 and key.lower() == "appid"), None)
         if appid_field is None:
-            sys.exit("Existing PyCab shortcut has no appid; no changes made.")
+            sys.exit("Existing Flatpak PyCab shortcut has no appid; no changes made.")
         appid = struct.unpack("<I", appid_field)[0]
-        print("Existing PyCab shortcut found; preserving shortcut and controller settings.")
+        print("Existing Flatpak PyCab shortcut found; preserving shortcut and controller settings.")
     else:
+        name = APP if APP not in existing_names else COLLISION_NAME
+        if name in existing_names:
+            sys.exit(f"Shortcut name {name!r} is already taken; no changes made.")
         exe = f'"{LAUNCHER}"'
-        appid = shortcut_id(exe, APP)
+        appid = shortcut_id(exe, name)
         index = str(max((int(key) for _, key, _ in entries), default=-1) + 1)
         def s(key, value):
             return (1, key, value)
         def n(key, value):
             return (2, key, struct.pack("<I", value))
         fields = [
-            n("appid", appid), s("appname", APP), s("exe", exe),
+            n("appid", appid), s("appname", name), s("exe", exe),
             s("StartDir", f'"{HOME}"'), s("icon", str(ICON)),
             s("ShortcutPath", ""), s("LaunchOptions", ""),
             n("IsHidden", 0), n("AllowDesktopConfig", 1),
@@ -131,7 +143,7 @@ def main():
             n("LastPlayTime", 0), (0, "tags", []),
         ]
         entries.append((0, index, fields))
-        print("Adding PyCab as a non-Steam game.")
+        print(f"Adding {name} as a non-Steam game.")
 
     sidebar_source = ART / "sidebar.png"
     sidebar_icon = HOME / ".local/share/icons/pycab-steam.png"
