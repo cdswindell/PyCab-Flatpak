@@ -162,9 +162,17 @@ tail -f ~/.var/app/io.github.cdswindell.PyCab/data/runtime/pycab-update.log
 flatpak run --command=cat io.github.cdswindell.PyCab /app/share/pycab/build-info
 ```
 
-**Deferred improvements:** Support explicit older-release installation
-(e.g. `install-release.sh --version vX.Y.Z-N`) for rollback; further
-optimize GitHub Actions Flatpak build times. Neither is implemented yet.
+**Rollback:** From the Deck checkout, run `./install-release.sh --version vX.Y.Z-N`
+to install a specific previously published stable GitHub release. The script
+fetches that release's assets from GitHub, verifies SHA-256, requires typing
+the exact requested tag to confirm the downgrade, and verifies the installed
+tag. Persistent application data is retained. Older releases without bundled
+host launcher or build metadata remain installable; the existing host launcher
+is retained in that case. Note that older PyTrain versions might not understand
+configuration written by newer versions. Run `./install-release.sh` without
+arguments to return to the latest published release.
+
+**Deferred improvement:** Further optimize GitHub Actions Flatpak build times.
 
 ## Persistent runtime logs and files
 
