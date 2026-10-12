@@ -1,13 +1,71 @@
-#!/bin/sh
-# Host-side launcher for Steam Gaming Mode. Only exit code 42 requests a relaunch.
-# All other exits (including crashes and Quit) return control to Steam.
+#!/usr/bin/env bash
+# Steam Gaming Mode launcher. Exit 42 requests a relaunch; an update marker
+# requests a verified host-side Flatpak replacement before that relaunch.
+set -uo pipefail
 APP_ID=io.github.cdswindell.PyCab
+REQUEST="$HOME/.var/app/$APP_ID/data/pycab-update-request"
+
+update_pycab() (
+  set -euo pipefail
+  local tmp bundle_url checksum_url
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  echo "Checking latest published PyCab release..."
+  curl --fail --silent --show-error --location --retry 3 \
+    -H 'Accept: application/vnd.github+json' \
+    'https://api.github.com/repos/cdswindell/PyCab-Flatpak/releases/latest' \
+    -o "$tmp/release.json"
+  python3 - "$tmp/release.json" "$tmp/urls" <<'PY'
+import json
+import re
+import sys
+from pathlib import Path
+
+release = json.loads(Path(sys.argv[1]).read_text())
+tag = release["tag_name"]
+if release.get("draft") or release.get("prerelease") or not re.fullmatch(r"v?\d+\.\d+\.\d+(?:-\d+)?", tag):
+    sys.exit("ERROR: No valid stable PyCab release")
+assets = {asset["name"]: asset["browser_download_url"] for asset in release.get("assets", [])}
+names = ("PyCab.flatpak", "PyCab.flatpak.sha256")
+if not all(name in assets for name in names):
+    sys.exit("ERROR: PyCab release is missing its bundle or checksum")
+if not all(assets[name].startswith("https://github.com/cdswindell/PyCab-Flatpak/releases/download/") for name in names):
+    sys.exit("ERROR: Unexpected release asset URL")
+Path(sys.argv[2]).write_text("\n".join(assets[name] for name in names) + "\n")
+print(f"Installing PyCab release {tag}...")
+PY
+  bundle_url="$(sed -n '1p' "$tmp/urls")"
+  checksum_url="$(sed -n '2p' "$tmp/urls")"
+  curl --fail --silent --show-error --location --retry 3 -o "$tmp/PyCab.flatpak" "$bundle_url"
+  curl --fail --silent --show-error --location --retry 3 -o "$tmp/PyCab.flatpak.sha256" "$checksum_url"
+  python3 - "$tmp/PyCab.flatpak.sha256" "$tmp/PyCab.flatpak.check" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+line = Path(sys.argv[1]).read_text().strip()
+match = re.fullmatch(r"([0-9a-fA-F]{64})\s+\*?(.+)", line)
+if not match or Path(match.group(2)).name != "PyCab.flatpak":
+    sys.exit("ERROR: Invalid PyCab checksum")
+Path(sys.argv[2]).write_text(f"{match.group(1)}  PyCab.flatpak\n")
+PY
+  (cd "$tmp" && sha256sum -c PyCab.flatpak.check)
+  flatpak install --user --reinstall -y "$tmp/PyCab.flatpak"
+)
+
 while :; do
   /usr/bin/flatpak run "$APP_ID" "$@"
   status=$?
   if [ "$status" -ne 42 ]; then
+    # A normal Quit must never leave a pending update for a later session.
+    rm -f "$REQUEST"
     exit "$status"
   fi
-  # Prevent an immediate restart loop if startup repeatedly requests a restart.
+  if [ -f "$REQUEST" ]; then
+    rm -f "$REQUEST"
+    if ! update_pycab; then
+      echo "ERROR: PyCab update failed; relaunching the existing installation." >&2
+    fi
+  fi
   sleep 1
 done
