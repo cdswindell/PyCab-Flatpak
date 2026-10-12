@@ -4,6 +4,9 @@
 set -uo pipefail
 APP_ID=io.github.cdswindell.PyCab
 REQUEST="$HOME/.var/app/$APP_ID/data/pycab-update-request"
+LOG_DIR="$HOME/.var/app/$APP_ID/data/runtime"
+UPDATE_LOG="$LOG_DIR/pycab-update.log"
+mkdir -p "$LOG_DIR"
 
 update_pycab() (
   set -euo pipefail
@@ -51,6 +54,20 @@ Path(sys.argv[2]).write_text(f"{match.group(1)}  PyCab.flatpak\n")
 PY
   (cd "$tmp" && sha256sum -c PyCab.flatpak.check)
   flatpak install --user --reinstall -y "$tmp/PyCab.flatpak"
+  echo "Installed release metadata:"
+  flatpak run --command=cat "$APP_ID" /app/share/pycab/build-info
+  echo "Synchronizing Steam host launcher..."
+  local launcher_tmp
+  mkdir -p "$HOME/.local/bin"
+  launcher_tmp="$(mktemp "$HOME/.local/bin/.pycab-steam.XXXXXXXX")"
+  if ! flatpak run --command=cat "$APP_ID" /app/share/pycab/pycab-steam > "$launcher_tmp"; then
+    rm -f "$launcher_tmp"
+    echo "WARNING: Installed Flatpak has no bundled host launcher; keeping existing launcher." >&2
+  else
+    chmod 755 "$launcher_tmp"
+    mv -f "$launcher_tmp" "$HOME/.local/bin/pycab-steam"
+    echo "Host launcher synchronized."
+  fi
 )
 
 while :; do
@@ -63,8 +80,11 @@ while :; do
   fi
   if [ -f "$REQUEST" ]; then
     rm -f "$REQUEST"
-    if ! update_pycab; then
-      echo "ERROR: PyCab update failed; relaunching the existing installation." >&2
+    echo "[$(date -Is)] PyCab update requested; recording details in $UPDATE_LOG" | tee -a "$UPDATE_LOG"
+    if update_pycab > >(tee -a "$UPDATE_LOG") 2> >(tee -a "$UPDATE_LOG" >&2); then
+      echo "[$(date -Is)] Update succeeded; relaunching." | tee -a "$UPDATE_LOG"
+    else
+      echo "[$(date -Is)] ERROR: PyCab update failed; relaunching the existing installation." | tee -a "$UPDATE_LOG" >&2
     fi
   fi
   sleep 1
