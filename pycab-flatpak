@@ -10,6 +10,13 @@ CACHE_ROOT="${XDG_DATA_HOME:-$HOME/.var/app/io.github.cdswindell.PyCab/data}/cac
 mkdir -p "$CACHE_ROOT/engine_images" "$CACHE_ROOT/engine_info" "$CACHE_ROOT/config" || exit 1
 export PYTRAIN_CACHE_DIR="$CACHE_ROOT"
 
+# PyTrain writes pytrain.log (and, in interactive mode, .pytrain.history)
+# relative to its working directory. Use persistent, host-visible Flatpak
+# application data instead of an ephemeral or read-only launch directory.
+RUNTIME_DIR="${XDG_DATA_HOME:-$HOME/.var/app/io.github.cdswindell.PyCab/data}/runtime"
+mkdir -p "$RUNTIME_DIR" || exit 1
+cd "$RUNTIME_DIR" || exit 1
+
 # No -base: PyTrain client. -base [IP]: Base 3 server mode.
 case "${1:-}" in
   -base)
