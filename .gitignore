@@ -4,3 +4,6 @@ repo/
 *.flatpak
 .DS_Store
 .idea/
+
+# Downloaded development build artifacts
+dist/PyCab.flatpak.sha256
