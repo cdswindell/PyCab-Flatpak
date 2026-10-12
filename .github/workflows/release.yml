@@ -13,7 +13,7 @@ jobs:
   flatpak:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Validate release lock and PyPI package
         run: |
@@ -57,7 +57,7 @@ jobs:
       # Cache the user Flatpak installation containing Platform and SDK.
       # Keep apt installation separate: executables belong to the runner OS.
       - name: Restore Flatpak SDK and runtime
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.local/share/flatpak
           key: flatpak-sdk-ubuntu2404-x86_64-26.08-v1
@@ -79,7 +79,7 @@ jobs:
       # A unique key saves the refreshed cache on each run; restore-keys selects
       # the newest compatible cache. flatpak-builder validates module inputs.
       - name: Restore Flatpak Builder cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: .flatpak-builder
           key: flatpak-builder-ubuntu2404-x86_64-${{ hashFiles('io.github.cdswindell.PyCab.yml') }}-${{ github.run_id }}
@@ -104,7 +104,7 @@ jobs:
         run: bash package-installer.sh
 
       - name: Upload workflow artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: PyCab-flatpak
           path: |
