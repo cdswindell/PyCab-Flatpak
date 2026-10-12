@@ -164,7 +164,7 @@ packaging paths, and CI workflows without improving the primary workflow.
 
 ## Script reference
 
-The table covers **all 11 shell scripts** in the repository. Platform symbols:
+The table covers **all 11 `.sh` scripts plus the two extensionless shell launchers** in the repository. Platform symbols:
 🍎 macOS; 🎮 Steam Deck / SteamOS; 🐧 Linux build host (including GitHub
 Actions). The platform indicates the intended execution environment, not
 necessarily a strict guard enforced by every script.
@@ -182,9 +182,11 @@ necessarily a strict guard enforced by every script.
 | [`install.sh`](#install) | 🎮 **Steam Deck / Linux** | Alternative installer: downloads the latest release by default or builds from source with `--build`. **Default download does not verify a checksum**; prefer `install-release.sh`. |
 | [`uninstall.sh`](#uninstall) | 🎮 **Steam Deck / Linux** | Uninstalls the user Flatpak and host launcher, preserving app data; Steam shortcut removal remains manual. |
 | [`scripts/environment.sh`](#scripts-environment) | 🔧 **Mac / Steam Deck (sourced)** | Shared strict platform/session checks, including macOS, SteamOS, and local graphical-console versus SSH. Not intended to run independently. |
+| [`pycab-steam`](#pycab-steam) | 🎮 **Steam Deck host** | Steam Gaming Mode launcher; runs Flatpak, handles exit code `42` to relaunch, and performs verified host-side updates when requested. |
+| [`pycab-flatpak`](#pycab-flatpak) | 📦 **Inside Flatpak** | Configures Steam Deck/PyTrain environment and persistent cache, then launches PyTrain in client or Base 3 server mode. |
 
-Other executable helpers (not shell scripts): `pycab-steam` is the host-side
-Steam launcher; `scripts/install-steam-shortcut.py` manages the Steam shortcut,
+Both extensionless launchers are shell scripts and are described below.
+The Python helper `scripts/install-steam-shortcut.py` manages the Steam shortcut,
 backs up `shortcuts.vdf`, and installs artwork while Steam is stopped.
 
 ## Script options and environment variables
@@ -341,6 +343,60 @@ PYCAB_PYLEGACY_SOURCE=/path/to/PyLegacy PYCAB_RELEASE_TAG=v2.12.9-1 ./build-rele
   without either `DISPLAY` or `WAYLAND_DISPLAY`.
 - These session environment variables are **inspected**, not supported
   user overrides for bypassing checks.
+
+### pycab-steam
+
+**🎮 Steam Deck host · Steam Gaming Mode launcher**
+
+- **Command switches:** No launcher-specific switches. Arguments are passed
+  unchanged to `flatpak run io.github.cdswindell.PyCab`, ultimately reaching
+  `pycab-flatpak`.
+- **Script-specific environment variables:** None. Uses `HOME` to locate
+  the persistent update request marker at
+  `~/.var/app/io.github.cdswindell.PyCab/data/pycab-update-request`.
+- **Behavior:** Launches the Flatpak in a loop. Exit status `42` requests
+  relaunch; if the update marker is present, the launcher consumes it,
+  downloads the latest stable release and checksum, verifies SHA-256, and
+  reinstalls the user Flatpak before relaunching. On an update failure, it
+  relaunches the existing installation. On a normal exit, it removes any
+  stale update request and returns the application's exit status.
+- **Requirements:** Host-side `flatpak`, `curl`, `python3`, and
+  `sha256sum`. Steam's shortcut normally invokes this launcher; it is
+  not a release publishing or development build script.
+
+### pycab-flatpak
+
+**📦 Inside Flatpak · Application entry-point launcher**
+
+- **Command switches:** `-base [IP]` starts Base 3 **server mode**;
+  without `-base`, starts **client mode**. Any remaining arguments are
+  forwarded to `/app/bin/pytrain`. `-base` is recognized **only as the
+  first argument**.
+- **`PYTRAIN_PLATFORM=steamdeck`**: Set by the launcher to select Steam
+  Deck behavior.
+- **`PYTRAIN_DISABLE_SELF_UPDATE=1`**: Set to prevent in-sandbox updates;
+  the host-side launcher/installer handles Flatpak replacement.
+- **`PYTHONUNBUFFERED=1`**: Set for immediate Python output.
+- **`LD_PRELOAD`**: Explicitly unset to avoid incompatible host preloads.
+- **`XDG_DATA_HOME`**: If set, determines the persistent cache root;
+  otherwise defaults to
+  `$HOME/.var/app/io.github.cdswindell.PyCab/data`. The script creates
+  `cache/engine_images`, `cache/engine_info`, and `cache/config`.
+- **`PYTRAIN_CACHE_DIR`**: Set to that cache root's `cache` directory,
+  shared by client and server modes. An inherited value is overwritten.
+- Both modes invoke `/app/bin/pytrain -headless` and load
+  `/app/share/pycab/buttons.py`. These are runtime launch options, not
+  switches for building or publishing PyCab.
+
+```bash
+# Arguments passed to the Flatpak entry point:
+flatpak run io.github.cdswindell.PyCab
+flatpak run io.github.cdswindell.PyCab -base
+flatpak run io.github.cdswindell.PyCab -base 192.168.4.100
+```
+
+**Launch chain:** Steam shortcut → `pycab-steam` (SteamOS host) →
+`flatpak run` → `pycab-flatpak` (sandbox) → `/app/bin/pytrain`.
 
 ### GitHub Actions workflows
 
