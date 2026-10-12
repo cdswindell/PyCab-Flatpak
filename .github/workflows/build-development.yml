@@ -6,12 +6,12 @@ on:
       pycab_ref:
         description: "PyCab-Flatpak branch, tag, or commit to build"
         required: true
-        default: "feature/pycab-flatpak-updates"
+        default: "master"
         type: string
       pylegacy_ref:
         description: "PyLegacy branch, tag, or commit to package"
         required: true
-        default: "feature/pycab-flatpak-updates"
+        default: "master"
         type: string
 
 permissions:
@@ -21,13 +21,13 @@ jobs:
   development:
     runs-on: ubuntu-24.04
     steps:
-      - name: Checkout PyCab Flatpak feature branch
+      - name: Checkout PyCab Flatpak source
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.pycab_ref }}
           persist-credentials: false
 
-      - name: Checkout PyLegacy development source
+      - name: Checkout PyLegacy source
         uses: actions/checkout@v4
         with:
           repository: cdswindell/PyLegacy
