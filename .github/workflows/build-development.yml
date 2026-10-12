@@ -22,13 +22,13 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout PyCab Flatpak source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ inputs.pycab_ref }}
           persist-credentials: false
 
       - name: Checkout PyLegacy source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: cdswindell/PyLegacy
           ref: ${{ inputs.pylegacy_ref }}
@@ -38,7 +38,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python 3.14
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.14"
 
@@ -60,12 +60,36 @@ jobs:
           print(f"Validated development wheel version: {version}")
           PY
 
+      # Share cache keys with release.yml so development and release builds
+      # can reuse the same Freedesktop SDK/runtime installation.
+      - name: Restore Flatpak SDK and runtime
+        uses: actions/cache@v5
+        with:
+          path: ~/.local/share/flatpak
+          key: flatpak-sdk-ubuntu2404-x86_64-26.08-v1
+
       - name: Install Flatpak build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y flatpak flatpak-builder
           flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y flathub org.freedesktop.Platform//26.08 org.freedesktop.Sdk//26.08
+          if flatpak info --user org.freedesktop.Platform//26.08 >/dev/null 2>&1 &&
+             flatpak info --user org.freedesktop.Sdk//26.08 >/dev/null 2>&1; then
+            echo "Flatpak SDK and runtime restored from cache."
+          else
+            flatpak install --user -y flathub org.freedesktop.Platform//26.08 org.freedesktop.Sdk//26.08
+          fi
+
+      # Reuse downloaded sources and module builds across release and dev runs.
+      # The run-specific key permits saving refreshed caches after each build.
+      - name: Restore Flatpak Builder cache
+        uses: actions/cache@v5
+        with:
+          path: .flatpak-builder
+          key: flatpak-builder-ubuntu2404-x86_64-${{ hashFiles('io.github.cdswindell.PyCab.yml') }}-${{ github.run_id }}
+          restore-keys: |
+            flatpak-builder-ubuntu2404-x86_64-${{ hashFiles('io.github.cdswindell.PyCab.yml') }}-
+            flatpak-builder-ubuntu2404-x86_64-
 
       - name: Build development Flatpak bundle
         env:
@@ -76,7 +100,7 @@ jobs:
         run: bash build-release.sh
 
       - name: Upload development bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: PyCab-development-flatpak
           if-no-files-found: error
