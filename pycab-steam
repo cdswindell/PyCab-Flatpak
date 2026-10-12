@@ -1,5 +1,13 @@
 #!/bin/sh
-# Host-side launcher for starting PyCab from Steam.
-# Steam launching Flatpak directly can leave the Tk window white-screened;
-# starting Flatpak through a host shell avoids that launch-path problem.
-exec /usr/bin/flatpak run io.github.cdswindell.PyCab "$@"
+# Host-side launcher for Steam Gaming Mode. Only exit code 75 requests a relaunch.
+# All other exits (including crashes and Quit) return control to Steam.
+APP_ID=io.github.cdswindell.PyCab
+while :; do
+  /usr/bin/flatpak run "$APP_ID" "$@"
+  status=$?
+  if [ "$status" -ne 75 ]; then
+    exit "$status"
+  fi
+  # Prevent an immediate restart loop if startup repeatedly requests a restart.
+  sleep 1
+done
