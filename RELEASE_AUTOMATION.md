@@ -147,9 +147,9 @@ scripts are supporting build tools or alternative installation methods.
 
 | Script | Run on | When to use it |
 | --- | --- | --- |
-| **① [`build-dev.sh`](#build-dev)** | 🍎 **Mac** | Build an **unpublished development Flatpak** for integration testing. |
-| **② [`publish-release.sh`](#publish-release)** | 🍎 **Mac** | Publish a **production release** (or packaging-only rebuild with `--rebuild`). |
-| **③ [`install-release.sh`](#install-release)** | 🎮 **Steam Deck** | **Install or update the published Flatpak** on the Deck. |
+| **① [`build-dev.sh`](#build-devsh)** | 🍎 **Mac** | Build an **unpublished development Flatpak** for integration testing. |
+| **② [`publish-release.sh`](#publish-releasesh)** | 🍎 **Mac** | Publish a **production release** (or packaging-only rebuild with `--rebuild`). |
+| **③ [`install-release.sh`](#install-releasesh)** | 🎮 **Steam Deck** | **Install or update the published Flatpak** on the Deck. |
 
 **For routine source changes**, prefer the Conda-first workflow described
 above: push PyLegacy changes from the Mac and update the Conda checkout on
@@ -171,17 +171,17 @@ necessarily a strict guard enforced by every script.
 
 | Script | Platform | Purpose |
 | --- | --- | --- |
-| **[`build-dev.sh`](#build-dev)** | 🍎 **Mac** | **Development Flatpak build.** Dispatches `build-development.yml` for selected PyCab/PyLegacy refs, waits for completion, and downloads the resulting bundle to `dist/`; no publication. |
-| **[`publish-release.sh`](#publish-release)** | 🍎 **Mac only** | **Production release.** Checks tags and PyPI versions, refreshes the dependency lock when needed, and starts the release pipeline. Supports `--dry-run` and packaging-only `--rebuild`. |
-| **[`install-release.sh`](#install-release)** | 🎮 **Steam Deck only** | **Recommended production installation/update.** Downloads the latest published Flatpak and checksum, ensures its runtime, installs PyCab, and refreshes the Steam launcher/shortcut. |
-| [`build-release.sh`](#build-release) | 🐧 **Linux / GitHub Actions** | Builds and exports the Flatpak with Flatpak Builder; supports prebuilt development wheels and local PyLegacy source overrides. |
-| [`update-lock.sh`](#update-lock) | 🍎 **Mac / maintainer machine with `gh`** | Requests a Linux/x86_64 Python dependency-lock workflow for a specified PyTrain version; prints instructions to download its artifact. |
-| [`build-installer-bundle.sh`](#build-installer-bundle) | 🍎 **Mac only** | Downloads and verifies the latest published Flatpak and packages it with checkout scripts/artwork as `PyCab-Installer.zip`, without rebuilding the app. |
-| [`package-installer.sh`](#package-installer) | 🐧 **Linux / GitHub Actions** | Verifies an already-built Flatpak and packages it with its checksum, installation scripts, launcher, and artwork into an installer ZIP. |
-| [`install-bundle.sh`](#install-bundle) | 🎮 **Steam Deck only** | Installs from an extracted standalone installer ZIP, verifies the checksum, and sets up the host launcher and Steam shortcut when Steam is closed. |
-| [`install.sh`](#install) | 🎮 **Steam Deck / Linux** | Alternative installer: downloads the latest release by default or builds from source with `--build`. **Default download does not verify a checksum**; prefer `install-release.sh`. |
-| [`uninstall.sh`](#uninstall) | 🎮 **Steam Deck / Linux** | Uninstalls the user Flatpak and host launcher, preserving app data; Steam shortcut removal remains manual. |
-| [`scripts/environment.sh`](#scripts-environment) | 🔧 **Mac / Steam Deck (sourced)** | Shared strict platform/session checks, including macOS, SteamOS, and local graphical-console versus SSH. Not intended to run independently. |
+| **[`build-dev.sh`](#build-devsh)** | 🍎 **Mac** | **Development Flatpak build.** Dispatches `build-development.yml` for selected PyCab/PyLegacy refs, waits for completion, and downloads the resulting bundle to `dist/`; no publication. |
+| **[`publish-release.sh`](#publish-releasesh)** | 🍎 **Mac only** | **Production release.** Checks tags and PyPI versions, refreshes the dependency lock when needed, and starts the release pipeline. Supports `--dry-run` and packaging-only `--rebuild`. |
+| **[`install-release.sh`](#install-releasesh)** | 🎮 **Steam Deck only** | **Recommended production installation/update.** Downloads the latest published Flatpak and checksum, ensures its runtime, installs PyCab, and refreshes the Steam launcher/shortcut. |
+| [`build-release.sh`](#build-releasesh) | 🐧 **Linux / GitHub Actions** | Builds and exports the Flatpak with Flatpak Builder; supports prebuilt development wheels and local PyLegacy source overrides. |
+| [`update-lock.sh`](#update-locksh) | 🍎 **Mac / maintainer machine with `gh`** | Requests a Linux/x86_64 Python dependency-lock workflow for a specified PyTrain version; prints instructions to download its artifact. |
+| [`build-installer-bundle.sh`](#build-installer-bundlesh) | 🍎 **Mac only** | Downloads and verifies the latest published Flatpak and packages it with checkout scripts/artwork as `PyCab-Installer.zip`, without rebuilding the app. |
+| [`package-installer.sh`](#package-installersh) | 🐧 **Linux / GitHub Actions** | Verifies an already-built Flatpak and packages it with its checksum, installation scripts, launcher, and artwork into an installer ZIP. |
+| [`install-bundle.sh`](#install-bundlesh) | 🎮 **Steam Deck only** | Installs from an extracted standalone installer ZIP, verifies the checksum, and sets up the host launcher and Steam shortcut when Steam is closed. |
+| [`install.sh`](#installsh) | 🎮 **Steam Deck / Linux** | Alternative installer: downloads the latest release by default or builds from source with `--build`. **Default download does not verify a checksum**; prefer `install-release.sh`. |
+| [`uninstall.sh`](#uninstallsh) | 🎮 **Steam Deck / Linux** | Uninstalls the user Flatpak and host launcher, preserving app data; Steam shortcut removal remains manual. |
+| [`scripts/environment.sh`](#scripts-environmentsh) | 🔧 **Mac / Steam Deck (sourced)** | Shared strict platform/session checks, including macOS, SteamOS, and local graphical-console versus SSH. Not intended to run independently. |
 | [`pycab-steam`](#pycab-steam) | 🎮 **Steam Deck host** | Steam Gaming Mode launcher; runs Flatpak, handles exit code `42` to relaunch, and performs verified host-side updates when requested. |
 | [`pycab-flatpak`](#pycab-flatpak) | 📦 **Inside Flatpak** | Configures Steam Deck/PyTrain environment and persistent cache, then launches PyTrain in client or Base 3 server mode. |
 
