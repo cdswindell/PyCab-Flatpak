@@ -139,6 +139,29 @@ accessory configuration paths have been verified without it.
 - GUI: graphical Steam Deck session.
 - Local packaging build: `build-release.sh`; CI uses `release.yml`.
 
+## The three primary scripts
+
+For the normal PyCab build, release, and installation workflow, **use these
+three scripts**. They are the recommended entry points; the other shell
+scripts are supporting build tools or alternative installation methods.
+
+| Script | Run on | When to use it |
+| --- | --- | --- |
+| **① `build-dev.sh`** | 🍎 **Mac** | Build an **unpublished development Flatpak** for integration testing. |
+| **② `publish-release.sh`** | 🍎 **Mac** | Publish a **production release** (or packaging-only rebuild with `--rebuild`). |
+| **③ `install-release.sh`** | 🎮 **Steam Deck** | **Install or update the published Flatpak** on the Deck. |
+
+**For routine source changes**, prefer the Conda-first workflow described
+above: push PyLegacy changes from the Mac and update the Conda checkout on
+the Deck. You do not need any of these three scripts for each edit.
+
+The remaining scripts stay in their current locations deliberately:
+`build-release.sh` and `package-installer.sh` are used by CI;
+`scripts/environment.sh` is sourced by other scripts; and the alternative
+installers remain useful for standalone ZIP distribution or manual recovery.
+Moving them to a `legacy/` directory would require updating callers,
+packaging paths, and CI workflows without improving the primary workflow.
+
 ## Script reference
 
 The table covers **all 11 shell scripts** in the repository. Platform symbols:
