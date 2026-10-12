@@ -54,12 +54,25 @@ jobs:
           echo "::error::pytrain-ogr-deck==$VERSION is not available on PyPI."
           exit 1
 
+      # Cache the user Flatpak installation containing Platform and SDK.
+      # Keep apt installation separate: executables belong to the runner OS.
+      - name: Restore Flatpak SDK and runtime
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/flatpak
+          key: flatpak-sdk-ubuntu2404-x86_64-26.08-v1
+          
       - name: Install Flatpak
         run: |
           sudo apt-get update
           sudo apt-get install -y flatpak flatpak-builder
           flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y flathub org.freedesktop.Platform//26.08 org.freedesktop.Sdk//26.08
+          if flatpak info --user org.freedesktop.Platform//26.08 >/dev/null 2>&1 &&
+             flatpak info --user org.freedesktop.Sdk//26.08 >/dev/null 2>&1; then
+            echo "Flatpak SDK and runtime restored from cache."
+          else
+            flatpak install --user -y flathub org.freedesktop.Platform//26.08 org.freedesktop.Sdk//26.08
+          fi
 
       # flatpak-builder stores downloaded sources and completed module builds here.
       # GitHub runners are ephemeral, so persist the cache between release runs.
