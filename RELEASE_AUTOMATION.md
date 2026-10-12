@@ -132,6 +132,40 @@ Do not remove any legacy cache symlink used during development until the
 newly built Flatpak has been installed and the image, product metadata, and
 accessory configuration paths have been verified without it.
 
+## Installation verification and in-app update diagnostics
+
+Published bundles include a matching copy of `pycab-steam` at
+`/app/share/pycab/pycab-steam`, plus a text release summary at
+`/app/share/pycab/build-info` (PyCab release, pinned PyTrain version,
+runtime, user installation, Steam Deck platform).
+
+`install-release.sh` installs the **bundled** host launcher and verifies
+the installed release tag, runtime, persistent-working-directory entry
+point, and host-launcher identity. It prints build metadata. When Steam
+is closed, it also runs the Steam shortcut helper in dry-run mode;
+shortcut inspection is deferred while Steam is running.
+
+The Gaming Mode host launcher now records in-app update attempts,
+checksum/install results, and relaunch attempts in persistent
+`~/.var/app/io.github.cdswindell.PyCab/data/runtime/pycab-update.log`.
+After a successful update it atomically replaces the host-side
+`~/.local/bin/pycab-steam` with the version bundled in the new Flatpak.
+Replacing the file does not interrupt the running Bash process; the
+replacement is used on the next Steam launch. Older Flatpaks without a
+bundled host launcher leave the current host launcher untouched.
+
+```bash
+# Steam Deck, during or after a Gaming Mode update:
+tail -f ~/.var/app/io.github.cdswindell.PyCab/data/runtime/pycab-update.log
+
+# Read installed build metadata:
+flatpak run --command=cat io.github.cdswindell.PyCab /app/share/pycab/build-info
+```
+
+**Deferred improvements:** Support explicit older-release installation
+(e.g. `install-release.sh --version vX.Y.Z-N`) for rollback; further
+optimize GitHub Actions Flatpak build times. Neither is implemented yet.
+
 ## Persistent runtime logs and files
 
 The Flatpak launcher changes PyTrain's working directory to persistent
