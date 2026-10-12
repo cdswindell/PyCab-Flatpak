@@ -1,11 +1,11 @@
 #!/bin/sh
-# Host-side launcher for Steam Gaming Mode. Only exit code 75 requests a relaunch.
+# Host-side launcher for Steam Gaming Mode. Only exit code 42 requests a relaunch.
 # All other exits (including crashes and Quit) return control to Steam.
 APP_ID=io.github.cdswindell.PyCab
 while :; do
   /usr/bin/flatpak run "$APP_ID" "$@"
   status=$?
-  if [ "$status" -ne 75 ]; then
+  if [ "$status" -ne 42 ]; then
     exit "$status"
   fi
   # Prevent an immediate restart loop if startup repeatedly requests a restart.
