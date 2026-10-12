@@ -55,6 +55,19 @@ jobs:
           flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
           flatpak install --user -y flathub org.freedesktop.Platform//26.08 org.freedesktop.Sdk//26.08
 
+      # flatpak-builder stores downloaded sources and completed module builds here.
+      # GitHub runners are ephemeral, so persist the cache between release runs.
+      # A unique key saves the refreshed cache on each run; restore-keys selects
+      # the newest compatible cache. flatpak-builder validates module inputs.
+      - name: Restore Flatpak Builder cache
+        uses: actions/cache@v4
+        with:
+          path: .flatpak-builder
+          key: flatpak-builder-ubuntu2404-x86_64-${{ hashFiles('io.github.cdswindell.PyCab.yml') }}-${{ github.run_id }}
+          restore-keys: |
+            flatpak-builder-ubuntu2404-x86_64-${{ hashFiles('io.github.cdswindell.PyCab.yml') }}-
+            flatpak-builder-ubuntu2404-x86_64-
+
       - name: Build bundle
         run: bash build-release.sh
 
