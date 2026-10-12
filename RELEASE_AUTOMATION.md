@@ -4,6 +4,40 @@ PyCab releases package a pinned `pytrain-ogr-deck` version into a prebuilt
 Steam Deck Flatpak. Run publication commands on the development Mac; run
 installation commands on the Steam Deck. Neither operation requires Docker.
 
+## Development and validation workflows
+
+**Fast iteration (Conda on Steam Deck):** Edit PyLegacy on the Mac, run tests,
+commit and push the changes, then use the Conda-based PyCab update workflow on
+the Steam Deck to pull and run that source. For branch work, check out the
+corresponding branch in the Deck's PyLegacy checkout before updating. Verify
+that the updater preserves the selected branch and updates source rather than
+installing a PyPI release. This path avoids a Flatpak rebuild for each GUI
+change.
+
+**Flatpak integration test (before publishing):** From the PyCab-Flatpak
+checkout on the Mac, run `./build-dev.sh` (or `bash build-dev.sh`).
+This dispatches `build-development.yml` using the selected PyCab and PyLegacy
+refs (defaults: `master`), waits for CI, and downloads the development
+`PyCab.flatpak` and checksum to `dist/`. It does **not** create a tag,
+publish to PyPI, or publish a GitHub release. For branch builds, set
+`PYCAB_REF` and/or `PYLEGACY_REF` before running it.
+
+Copy the bundle to the Steam Deck and install it there:
+
+```bash
+# Mac:
+scp dist/PyCab.flatpak deck@steamdeck:~/
+
+# Steam Deck (SSH or Desktop Konsole):
+flatpak install --user --reinstall -y ~/PyCab.flatpak
+```
+
+The Conda and Flatpak environments should be kept as similar as practical:
+Python and package versions, Tk/Tcl, pygame, GuiZero, Pillow, font family
+(Noto Sans for the Steam Deck), resource paths, and runtime configuration.
+Use the Flatpak build as the final integration check because different Tk
+builds can still render widgets differently.
+
 ## New PyTrain version
 
 After tagging PyLegacy (numeric tag, for example `2.12.4`) and starting
@@ -107,26 +141,32 @@ accessory configuration paths have been verified without it.
 
 ## Script reference
 
-The scripts below are in the repository root unless a subdirectory is shown. **Normal users should clone the repository and use `install-release.sh`**; the release ZIP is an alternative without Git.
+The table covers **all 11 shell scripts** in the repository. Platform symbols:
+🍎 macOS; 🎮 Steam Deck / SteamOS; 🐧 Linux build host (including GitHub
+Actions). The platform indicates the intended execution environment, not
+necessarily a strict guard enforced by every script.
 
-| Script | Runs on | Purpose |
+| Script | Platform | Purpose |
 | --- | --- | --- |
-| `install-bundle.sh` | Steam Deck (Desktop Mode/SSH) | Standalone release ZIP installer (no Git). Verifies bundled SHA-256, installs/reinstalls the user Flatpak, installs host launcher, creates or refreshes Steam shortcut and artwork if Steam is closed. |
-| `install-release.sh` | Steam Deck (repository checkout) | **Recommended initial install/update.** Fetches latest published Flatpak and checksum from GitHub Releases, verifies, installs, reports PyTrain version, refreshes launcher and Steam integration. |
-| `install.sh` | Steam Deck (repository checkout) | Alternative development installer: downloads latest Flatpak by default; `--build` builds/installs from source with Flatpak Builder. **Default download does not verify a checksum**; prefer the two installers above. |
-| `uninstall.sh` | Steam Deck (repository checkout) | Removes user Flatpak and host launcher; retains app data; instructs user to remove Steam shortcut manually. |
-| `pycab-steam` | Steam Deck (Steam launcher) | Host-side shell launcher for `flatpak run io.github.cdswindell.PyCab`; Steam shortcut targets this file to avoid white Tk windows. |
-| `scripts/install-steam-shortcut.py` | Steam Deck (Steam exited) | Python helper, not a shell script: safely adds/updates PyCab non-Steam shortcut, backs up `shortcuts.vdf`, preserves other entries/controller settings, installs artwork; supports `--dry-run`. |
-| `scripts/environment.sh` | Sourced by scripts | Shared macOS/SteamOS and local graphical-console checks; not meant to be run independently. |
-| `publish-release.sh` | macOS (maintainer) | Checks versions/PyPI, regenerates dependency lock via CI if needed, confirms and pushes immutable release tag; `--rebuild` creates a new packaging revision; `--dry-run` previews. |
-| `update-lock.sh` | Maintainer machine with `gh` | Manually dispatches Linux Python dependency-lock workflow for a specified PyTrain version; instructions explain how to retrieve the generated artifact. |
-| `build-release.sh` | Linux CI/developer build host | Builds Flatpak from manifest, retries transient failures, writes `dist/PyCab.flatpak` and SHA-256 manifest. Requires Flatpak Builder/runtime. |
-| `package-installer.sh` | Linux CI/developer build host | Takes built Flatpak/checksum, validates them, adds installer scripts, host launcher and artwork, produces `dist/PyCab-Installer.zip`. |
-| `build-installer-bundle.sh` | macOS (optional) | Downloads/verifies the latest published Flatpak and repackages it with **local checkout** scripts/artwork into a standalone ZIP. Not the main CI release path. |
+| **`build-dev.sh`** | 🍎 **Mac** | **Development Flatpak build.** Dispatches `build-development.yml` for selected PyCab/PyLegacy refs, waits for completion, and downloads the resulting bundle to `dist/`; no publication. |
+| **`publish-release.sh`** | 🍎 **Mac only** | **Production release.** Checks tags and PyPI versions, refreshes the dependency lock when needed, and starts the release pipeline. Supports `--dry-run` and packaging-only `--rebuild`. |
+| **`install-release.sh`** | 🎮 **Steam Deck only** | **Recommended production installation/update.** Downloads the latest published Flatpak and checksum, ensures its runtime, installs PyCab, and refreshes the Steam launcher/shortcut. |
+| `build-release.sh` | 🐧 **Linux / GitHub Actions** | Builds and exports the Flatpak with Flatpak Builder; supports prebuilt development wheels and local PyLegacy source overrides. |
+| `update-lock.sh` | 🍎 **Mac / maintainer machine with `gh`** | Requests a Linux/x86_64 Python dependency-lock workflow for a specified PyTrain version; prints instructions to download its artifact. |
+| `build-installer-bundle.sh` | 🍎 **Mac only** | Downloads and verifies the latest published Flatpak and packages it with checkout scripts/artwork as `PyCab-Installer.zip`, without rebuilding the app. |
+| `package-installer.sh` | 🐧 **Linux / GitHub Actions** | Verifies an already-built Flatpak and packages it with its checksum, installation scripts, launcher, and artwork into an installer ZIP. |
+| `install-bundle.sh` | 🎮 **Steam Deck only** | Installs from an extracted standalone installer ZIP, verifies the checksum, and sets up the host launcher and Steam shortcut when Steam is closed. |
+| `install.sh` | 🎮 **Steam Deck / Linux** | Alternative installer: downloads the latest release by default or builds from source with `--build`. **Default download does not verify a checksum**; prefer `install-release.sh`. |
+| `uninstall.sh` | 🎮 **Steam Deck / Linux** | Uninstalls the user Flatpak and host launcher, preserving app data; Steam shortcut removal remains manual. |
+| `scripts/environment.sh` | 🔧 **Mac / Steam Deck (sourced)** | Shared strict platform/session checks, including macOS, SteamOS, and local graphical-console versus SSH. Not intended to run independently. |
+
+Other executable helpers (not shell scripts): `pycab-steam` is the host-side
+Steam launcher; `scripts/install-steam-shortcut.py` manages the Steam shortcut,
+backs up `shortcuts.vdf`, and installs artwork while Steam is stopped.
 
 ### GitHub Actions workflows
 
-- `.github/workflows/release.yml`: Validates tagged release/version lock, installs Flatpak build prerequisites, runs `build-release.sh` and `package-installer.sh`, uploads CI artifacts, and publishes all three release assets for tags.
+- `.github/workflows/build-development.yml`: Builds an unpublished development Flatpak from selected PyCab/PyLegacy refs and uploads a downloadable workflow artifact; no tag or release.\n- `.github/workflows/release.yml`: Validates tagged release/version lock, installs Flatpak build prerequisites, runs `build-release.sh` and `package-installer.sh`, uploads CI artifacts, and publishes all three release assets for tags.
 - `.github/workflows/update-lock.yml`: Resolves pinned Linux/x86_64 Python dependencies and uploads `requirements-lock.txt` as a workflow artifact.
 
 ### Steam shortcut behavior
