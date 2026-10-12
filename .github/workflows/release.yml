@@ -75,7 +75,17 @@ jobs:
             flatpak-builder-ubuntu2404-x86_64-
 
       - name: Build bundle
-        run: bash build-release.sh
+        env:
+          # Branch workflow_dispatch runs have no release tag; use the pinned
+          # PyTrain version to generate a valid local bundle metadata tag.
+          PYCAB_RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+        run: |
+          if [[ -z "$PYCAB_RELEASE_TAG" ]]; then
+            VERSION="$(sed -n 's/^pytrain-ogr-deck==//p' requirements-lock.txt)"
+            [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Invalid pinned PyTrain version: $VERSION"; exit 1; }
+            export PYCAB_RELEASE_TAG="v$VERSION"
+          fi
+          bash build-release.sh
 
       - name: Package Steam Deck installer
         run: bash package-installer.sh
