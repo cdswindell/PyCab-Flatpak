@@ -8,6 +8,18 @@ DIST="$ROOT/dist"
 DEV_WHEELS="$ROOT/dev-wheels"
 
 cd "$ROOT"
+BUILD_STARTED=$SECONDS
+phase_start() {
+  PHASE_STARTED=$SECONDS
+  echo "::group::PyCab phase: $1"
+  echo "PHASE START: $1 ($(date -u +%Y-%m-%dT%H:%M:%SZ))"
+}
+phase_end() {
+  local name="$1"
+  local elapsed=$((SECONDS - PHASE_STARTED))
+  echo "PHASE END: $name (${elapsed}s)"
+  echo "::endgroup::"
+}
 # Optional development override; normal release builds remain pinned to PyPI.
 if [[ "${PYCAB_PREBUILT_WHEEL:-0}" != "1" ]]; then
   rm -rf "$DEV_WHEELS"
@@ -47,6 +59,7 @@ fi
 # Keep the Flatpak Builder source cache between attempts. A transient source
 # download failure should not require re-downloading successful modules.
 MAX_ATTEMPTS=3
+phase_start "Flatpak Builder (includes module builds and Prune Cache)"
 for ((attempt=1; attempt<=MAX_ATTEMPTS; attempt++)); do
   echo "Flatpak build attempt $attempt/$MAX_ATTEMPTS..."
   if "${BUILDER[@]}" \
@@ -65,8 +78,12 @@ for ((attempt=1; attempt<=MAX_ATTEMPTS; attempt++)); do
   sleep "$delay"
 done
 
+phase_end "Flatpak Builder (includes module builds and Prune Cache)"
+phase_start "Flatpak bundle export"
 flatpak build-bundle "$REPO" "$DIST/PyCab.flatpak" "$APP_ID" master
 (cd "$DIST" && sha256sum PyCab.flatpak > PyCab.flatpak.sha256)
+phase_end "Flatpak bundle export"
+echo "TOTAL build-release.sh elapsed: $((SECONDS - BUILD_STARTED))s"
 
 echo "Created:"
 ls -lh "$DIST/PyCab.flatpak" "$DIST/PyCab.flatpak.sha256"
