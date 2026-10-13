@@ -36,8 +36,11 @@ gh run watch "$RUN_ID" --repo "$REPO" --exit-status
 
 mkdir -p "$ROOT/dist"
 rm -f "$ROOT/dist/PyCab.flatpak" "$ROOT/dist/PyCab.flatpak.sha256"
+ARTIFACT="$(gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts" --jq '.artifacts[].name | select(startswith("PyCab-development-v"))' | head -n 1)"
+[[ -n "$ARTIFACT" ]] || { echo "ERROR: Development bundle artifact not found." >&2; exit 1; }
+echo "Downloading $ARTIFACT..."
 gh run download "$RUN_ID" --repo "$REPO" \
-  --name PyCab-development-flatpak --dir "$ROOT/dist"
+  --name "$ARTIFACT" --dir "$ROOT/dist"
 
 echo "Development Flatpak downloaded:"
 ls -lh "$ROOT/dist/PyCab.flatpak" "$ROOT/dist/PyCab.flatpak.sha256"
