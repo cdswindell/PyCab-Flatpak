@@ -113,4 +113,7 @@ jobs:
           fi
           git tag "v$VERSION"
           git push origin "v$VERSION"
-          # Tags pushed with GITHUB_TOKEN do not trigger push workflows.\n          # Dispatch release.yml explicitly against the new tag.\n          gh workflow run release.yml --ref "v$VERSION"\n          echo "Pushed PyCab v$VERSION and dispatched release.yml."
+          # Tags pushed with GITHUB_TOKEN do not trigger push workflows.
+          # Dispatch release.yml explicitly against the new tag.
+          gh workflow run release.yml --ref "v$VERSION"
+          echo "Pushed PyCab v$VERSION and dispatched release.yml."
