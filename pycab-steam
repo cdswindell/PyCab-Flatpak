@@ -18,7 +18,12 @@ update_pycab() (
     -H 'Accept: application/vnd.github+json' \
     'https://api.github.com/repos/cdswindell/PyCab-Flatpak/releases/latest' \
     -o "$tmp/release.json"
-  python3 - "$tmp/release.json" "$tmp/urls" <<'PY'
+  local installed_tag
+  installed_tag="$(flatpak run --command=cat "$APP_ID" /app/share/pycab/release-tag)" || {
+    echo "ERROR: Unable to read installed PyCab version; refusing replacement." >&2
+    return 1
+  }
+  python3 - "$tmp/release.json" "$tmp/urls" "$installed_tag" <<'PY'
 import json
 import re
 import sys
@@ -28,6 +33,18 @@ release = json.loads(Path(sys.argv[1]).read_text())
 tag = release["tag_name"]
 if release.get("draft") or release.get("prerelease") or not re.fullmatch(r"v?\d+\.\d+\.\d+(?:-\d+)?", tag):
     sys.exit("ERROR: No valid stable PyCab release")
+def version_key(value):
+    match = re.fullmatch(r"v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-(\\d+))?(?:-dev\\.(\\d+))?", value)
+    if match is None:
+        sys.exit(f"ERROR: Invalid installed or available PyCab tag: {value}")
+    major, minor, patch, revision, development = match.groups()
+    return (int(major), int(minor), int(patch), int(revision or 0), int(development or 0))
+
+installed_tag = sys.argv[3].strip()
+if version_key(tag) <= version_key(installed_tag):
+    print(f"No newer production release: installed {installed_tag}, latest {tag}. Keeping existing Flatpak.")
+    Path(sys.argv[2]).write_text("SKIP
+")\n    sys.exit(0)
 assets = {asset["name"]: asset["browser_download_url"] for asset in release.get("assets", [])}
 names = ("PyCab.flatpak", "PyCab.flatpak.sha256")
 if not all(name in assets for name in names):
@@ -37,6 +54,9 @@ if not all(assets[name].startswith("https://github.com/cdswindell/PyCab-Flatpak/
 Path(sys.argv[2]).write_text("\n".join(assets[name] for name in names) + "\n")
 print(f"Installing PyCab release {tag}...")
 PY
+  if [[ "$(head -n 1 "$tmp/urls")" == "SKIP" ]]; then
+    return 0
+  fi
   bundle_url="$(sed -n '1p' "$tmp/urls")"
   checksum_url="$(sed -n '2p' "$tmp/urls")"
   curl --fail --silent --show-error --location --retry 3 -o "$tmp/PyCab.flatpak" "$bundle_url"
