@@ -6,6 +6,8 @@ on:
   schedule:
     - cron: '17,47 * * * *'
   workflow_dispatch:
+  repository_dispatch:
+    types: [pytrain-release]
 
 permissions:
   contents: write
@@ -36,9 +38,16 @@ jobs:
         run: |
           set -euo pipefail
           git fetch origin master --tags
-          VERSION="$(gh api 'repos/cdswindell/PyLegacy/git/matching-refs/tags/' --paginate --jq '.[].ref' |
+          # Dispatch events target the exact PyLegacy version; scheduled runs discover latest.
+          EVENT_VERSION="${{ github.event.client_payload.version || '' }}"
+          if [[ -n "$EVENT_VERSION" ]]; then
+            [[ "$EVENT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Invalid dispatched version: $EVENT_VERSION"; exit 1; }
+            VERSION="$EVENT_VERSION"
+          else
+            VERSION="$(gh api 'repos/cdswindell/PyLegacy/git/matching-refs/tags/' --paginate --jq '.[].ref' |
             sed -nE 's@^refs/tags/([0-9]+\.[0-9]+\.[0-9]+)$@\1@p' |
             sort -V | tail -n 1)"
+          fi
           [[ -n "$VERSION" ]] || { echo "::error::No numeric PyLegacy release tags"; exit 1; }
           echo "PyLegacy version: $VERSION"
           if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null 2>&1; then
