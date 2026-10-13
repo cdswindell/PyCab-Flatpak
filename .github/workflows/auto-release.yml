@@ -1,7 +1,7 @@
 name: Auto-publish PyCab for PyTrain releases
 
 # Cross-repository workflow_run is not supported by GitHub Actions.
-# Polling avoids cross-repository PATs and starts only after both PyPI uploads exist.
+# PyLegacy dispatches after both PyPI uploads; polling recovers missed events.
 on:
   schedule:
     - cron: '17,47 * * * *'
