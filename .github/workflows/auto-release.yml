@@ -88,16 +88,16 @@ jobs:
           set -euo pipefail
           python -m venv /tmp/pycab-release-lock
           # PyPI's JSON API can expose a release before the package index used by pip.
-          # Retry briefly to allow index/CDN propagation; the scheduled run remains a fallback.
-          for attempt in {1..12}; do
+          # Retry for up to five minutes to allow index/CDN propagation; scheduled polling remains a fallback.
+          for attempt in {1..21}; do
             if /tmp/pycab-release-lock/bin/python -m pip install --disable-pip-version-check --no-cache-dir "pytrain-ogr-deck==$VERSION"; then
               break
             fi
-            if (( attempt == 12 )); then
+            if (( attempt == 21 )); then
               echo "::error::pytrain-ogr-deck==$VERSION remains unavailable to pip after retries"
               exit 1
             fi
-            echo "PyPI package index not ready (attempt $attempt/12); retrying in 15 seconds..."
+            echo "PyPI package index not ready (attempt $attempt/21); retrying in 15 seconds..."
             sleep 15
           done
           /tmp/pycab-release-lock/bin/python -m pip check
