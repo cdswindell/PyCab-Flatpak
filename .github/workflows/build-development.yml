@@ -18,6 +18,10 @@ permissions:
   contents: read
   actions: read
 
+concurrency:
+  group: pycab-development-numbering
+  cancel-in-progress: false
+
 jobs:
   development:
     runs-on: ubuntu-24.04
@@ -86,31 +90,26 @@ jobs:
               raise SystemExit("Latest production PyCab release is newer than checked-out PyLegacy tags")
           revision = int(match.group(2) or 0) if published_version == current_version else 0
           base = f"v{version}" + (f"-{revision}" if revision else "")
-          # Count development workflow runs since this production release.
-          # For an as-yet unpublished PyTrain version, count runs since its tag.
-          if published_version == current_version:
-              cutoff = release["published_at"]
-          else:
-              cutoff = subprocess.check_output(
-                  ["git", "-C", "pylegacy-source", "log", "-1", "--format=%cI", version], text=True
-              ).strip()
-          run_id = int(os.environ["GH_RUN_ID"])
-          count = 0
+          # Only completed, version-tagged development artifacts count.
+          # Earlier unnumbered development runs do not consume dev revisions.
+          highest = 0
           page = 1
+          prefix = f"PyCab-development-{base}-dev."
           while True:
               data = api(
-                  f"repos/{os.environ['GH_REPOSITORY']}/actions/workflows/"
-                  f"build-development.yml/runs?event=workflow_dispatch&per_page=100&page={page}"
+                  f"repos/{os.environ['GH_REPOSITORY']}/actions/artifacts?per_page=100&page={page}"
               )
-              runs = data["workflow_runs"]
-              for run in runs:
-                  if run["created_at"] >= cutoff and run["id"] <= run_id:
-                      count += 1
-              if len(runs) < 100 or runs[-1]["created_at"] < cutoff:
+              artifacts = data["artifacts"]
+              for artifact in artifacts:
+                  name = artifact["name"]
+                  if not artifact["expired"] and name.startswith(prefix):
+                      suffix = name[len(prefix):]
+                      if suffix.isdigit():
+                          highest = max(highest, int(suffix))
+              if len(artifacts) < 100:
                   break
               page += 1
-          if count < 1:
-              raise SystemExit("Could not determine development run sequence")
+          count = highest + 1
           tag = f"{base}-dev.{count}"
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as output:
               output.write(f"PYCAB_RELEASE_TAG={tag}\n")
@@ -181,7 +180,7 @@ jobs:
       - name: Upload development bundle
         uses: actions/upload-artifact@v6
         with:
-          name: PyCab-development-flatpak
+          name: PyCab-development-${{ env.PYCAB_RELEASE_TAG }}
           if-no-files-found: error
           retention-days: 7
           path: |
