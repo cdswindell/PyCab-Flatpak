@@ -15,6 +15,41 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Detect source-backed production rebuild
+        id: source
+        shell: bash
+        run: |
+          SOURCE_SHA=""
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            SOURCE_SHA="$(git for-each-ref --format='%(contents)' "refs/tags/${GITHUB_REF_NAME}" |
+              sed -nE 's/^PyLegacy-Source: ([0-9a-f]{40})$/\1/p')"
+          fi
+          if [[ -n "$SOURCE_SHA" ]]; then
+            [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-[1-9][0-9]*$ ]] ||
+              { echo "::error::Source builds require a packaging rebuild tag"; exit 1; }
+            echo "PyLegacy source commit: $SOURCE_SHA"
+          fi
+          echo "sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout PyLegacy source for source-backed rebuild
+        if: steps.source.outputs.sha != ''
+        uses: actions/checkout@v5
+        with:
+          repository: cdswindell/PyLegacy
+          ref: ${{ steps.source.outputs.sha }}
+          path: pylegacy-source
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+
+      - name: Build source-backed Deck wheel
+        if: steps.source.outputs.sha != ''
+        run: |
+          python3 -m pip install --upgrade build setuptools-scm
+          mkdir -p dev-wheels
+          (cd pylegacy-source && python3 scripts/build_deck.py --allow-local-version -o ../dev-wheels)
+          test "$(find dev-wheels -name 'pytrain_ogr_deck-*.whl' | wc -l)" -eq 1
+
       - name: Validate release lock and PyPI package
         run: |
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
@@ -92,6 +127,8 @@ jobs:
           # Branch workflow_dispatch runs have no release tag; use the pinned
           # PyTrain version to generate a valid local bundle metadata tag.
           PYCAB_RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          PYCAB_PREBUILT_WHEEL: ${{ steps.source.outputs.sha != '' && '1' || '0' }}
+          PYCAB_PYLEGACY_COMMIT: ${{ steps.source.outputs.sha }}
         run: |
           if [[ -z "$PYCAB_RELEASE_TAG" ]]; then
             VERSION="$(sed -n 's/^pytrain-ogr-deck==//p' requirements-lock.txt)"
