@@ -16,13 +16,13 @@ mkdir -p "$LOG_DIR"
 update_pycab() (
   set -euo pipefail
   local tmp bundle_url checksum_url
-  tmp="$(mktemp -d)"
+  tmp="$(mktemp -d)" || return 1
   trap 'rm -rf "$tmp"' EXIT
   echo "Checking latest published PyCab release..."
   curl --fail --silent --show-error --location --retry 3 \
     -H 'Accept: application/vnd.github+json' \
     'https://api.github.com/repos/cdswindell/PyCab-Flatpak/releases/latest' \
-    -o "$tmp/release.json"
+    -o "$tmp/release.json" || return 1
   local installed_tag
   installed_tag="$(flatpak run --command=cat "$APP_ID" /app/share/pycab/release-tag)" || {
     echo "ERROR: Unable to read installed PyCab version; refusing replacement." >&2
@@ -91,7 +91,7 @@ PY
   local launcher_tmp
   mkdir -p "$HOME/.local/bin"
   launcher_tmp="$(mktemp "$HOME/.local/bin/.pycab-steam.XXXXXXXX")"
-  if ! flatpak run --command=cat "$APP_ID" /app/share/pycab/pycab-steam > "$launcher_tmp"; then
+  if ! flatpak run --command=cat "$APP_ID" /app/share/pycab/pycab-steam > "$launcher_tmp" || [[ ! -s "$launcher_tmp" ]]; then
     rm -f "$launcher_tmp"
     echo "WARNING: Installed Flatpak has no bundled host launcher; keeping existing launcher." >&2
   else
