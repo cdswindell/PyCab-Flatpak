@@ -39,7 +39,7 @@ tag = release["tag_name"]
 if release.get("draft") or release.get("prerelease") or not re.fullmatch(r"v?\d+\.\d+\.\d+(?:-\d+)?", tag):
     sys.exit("ERROR: No valid stable PyCab release")
 def version_key(value):
-    match = re.fullmatch(r"v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-(\\d+))?(?:-dev\\.(\\d+))?", value)
+    match = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)(?:-(\d+))?(?:-dev\.(\d+))?", value)
     if match is None:
         sys.exit(f"ERROR: Invalid installed or available PyCab tag: {value}")
     major, minor, patch, revision, development = match.groups()
