@@ -87,5 +87,13 @@ while :; do
       echo "[$(date -Is)] ERROR: PyCab update failed; relaunching the existing installation." | tee -a "$UPDATE_LOG" >&2
     fi
   fi
-  sleep 1
+  # Give a restarting server time to come back, and stagger clients so
+  # they do not all reconnect simultaneously. Server mode must relaunch promptly.
+  if [ "${1:-}" = "-base" ]; then
+    sleep 1
+  else
+    delay=$((8 + RANDOM % 5))
+    echo "Waiting ${delay}s before reconnecting PyCab client..."
+    sleep "$delay"
+  fi
 done
