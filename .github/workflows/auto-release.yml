@@ -4,7 +4,7 @@ name: Auto-publish PyCab for PyTrain releases
 # PyLegacy dispatches after both PyPI uploads; polling recovers missed events.
 on:
   schedule:
-    - cron: '17,47 * * * *'
+    - cron: '17 * * * *'
   workflow_dispatch:
   repository_dispatch:
     types: [pytrain-release]
