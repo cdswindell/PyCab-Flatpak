@@ -41,13 +41,13 @@ if [[ -z "$RELEASE_TAG" ]]; then
   # Keep the existing local build workflow working without extra arguments.
   RELEASE_TAG="v$(sed -n 's/^pytrain-ogr-deck==//p' requirements-lock.txt)"
 fi
-if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[1-9][0-9]*)?$ ]]; then
+if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[1-9][0-9]*)?(-dev\.[1-9][0-9]*)?$ ]]; then
   echo "ERROR: Set PYCAB_RELEASE_TAG=vX.Y.Z[-N] for local builds." >&2
   exit 2
 fi
 printf '%s\n' "$RELEASE_TAG" > release-tag
 PYTRAIN_VERSION="$(sed -n 's/^pytrain-ogr-deck==//p' requirements-lock.txt)"
-printf 'PyCab Release: %s\nPyTrain Version: %s\nFlatpak Runtime: 26.08\nInstallation: User\nPlatform: Steam Deck\n' "$RELEASE_TAG" "$PYTRAIN_VERSION" > build-info
+printf 'PyCab Release: %s\nPyTrain Version: %s\nPyLegacy Commit: %s\nFlatpak Runtime: 26.08\nInstallation: User\nPlatform: Steam Deck\n' "$RELEASE_TAG" "$PYTRAIN_VERSION" "${PYCAB_PYLEGACY_COMMIT:-pypi}" > build-info
 trap 'rm -f "$ROOT/release-tag" "$ROOT/build-info"; rm -rf "$DEV_WHEELS"' EXIT
 rm -rf "$REPO" "$DIST"
 mkdir -p "$DIST"
