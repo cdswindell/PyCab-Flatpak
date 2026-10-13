@@ -2,6 +2,11 @@
 # Steam Gaming Mode launcher. Exit 42 requests a relaunch; an update marker
 # requests a verified host-side Flatpak replacement before that relaunch.
 set -uo pipefail
+# Steam injects a 32-bit overlay into 64-bit host utilities, generating harmless
+# loader warnings. Keep Steam Input intact; clear only the incompatible preload.
+if [[ "${LD_PRELOAD:-}" == *gameoverlayrenderer.so* ]]; then
+  unset LD_PRELOAD
+fi
 APP_ID=io.github.cdswindell.PyCab
 REQUEST="$HOME/.var/app/$APP_ID/data/pycab-update-request"
 LOG_DIR="$HOME/.var/app/$APP_ID/data/runtime"
@@ -43,8 +48,8 @@ def version_key(value):
 installed_tag = sys.argv[3].strip()
 if version_key(tag) <= version_key(installed_tag):
     print(f"No newer production release: installed {installed_tag}, latest {tag}. Keeping existing Flatpak.")
-    Path(sys.argv[2]).write_text("SKIP
-")\n    sys.exit(0)
+    Path(sys.argv[2]).write_text("SKIP\n")
+    sys.exit(0)
 assets = {asset["name"]: asset["browser_download_url"] for asset in release.get("assets", [])}
 names = ("PyCab.flatpak", "PyCab.flatpak.sha256")
 if not all(name in assets for name in names):
@@ -54,13 +59,17 @@ if not all(assets[name].startswith("https://github.com/cdswindell/PyCab-Flatpak/
 Path(sys.argv[2]).write_text("\n".join(assets[name] for name in names) + "\n")
 print(f"Installing PyCab release {tag}...")
 PY
+  local rc=$?
+  if (( rc != 0 )); then echo "ERROR: Release metadata validation failed ($rc)." >&2; return 1; fi
+  [[ -s "$tmp/urls" ]] || { echo "ERROR: Missing release asset URLs." >&2; return 1; }
   if [[ "$(head -n 1 "$tmp/urls")" == "SKIP" ]]; then
     return 0
   fi
   bundle_url="$(sed -n '1p' "$tmp/urls")"
   checksum_url="$(sed -n '2p' "$tmp/urls")"
-  curl --fail --silent --show-error --location --retry 3 -o "$tmp/PyCab.flatpak" "$bundle_url"
-  curl --fail --silent --show-error --location --retry 3 -o "$tmp/PyCab.flatpak.sha256" "$checksum_url"
+  [[ -n "$bundle_url" && -n "$checksum_url" ]] || { echo "ERROR: Empty asset URL." >&2; return 1; }
+  curl --fail --silent --show-error --location --retry 3 -o "$tmp/PyCab.flatpak" "$bundle_url" || return 1
+  curl --fail --silent --show-error --location --retry 3 -o "$tmp/PyCab.flatpak.sha256" "$checksum_url" || return 1
   python3 - "$tmp/PyCab.flatpak.sha256" "$tmp/PyCab.flatpak.check" <<'PY'
 import re
 import sys
@@ -72,10 +81,12 @@ if not match or Path(match.group(2)).name != "PyCab.flatpak":
     sys.exit("ERROR: Invalid PyCab checksum")
 Path(sys.argv[2]).write_text(f"{match.group(1)}  PyCab.flatpak\n")
 PY
-  (cd "$tmp" && sha256sum -c PyCab.flatpak.check)
-  flatpak install --user --reinstall -y "$tmp/PyCab.flatpak"
+  rc=$?
+  if (( rc != 0 )); then echo "ERROR: Invalid checksum metadata ($rc)." >&2; return 1; fi
+  (cd "$tmp" && sha256sum -c PyCab.flatpak.check) || return 1
+  flatpak install --user --reinstall -y "$tmp/PyCab.flatpak" || return 1
   echo "Installed release metadata:"
-  flatpak run --command=cat "$APP_ID" /app/share/pycab/build-info
+  flatpak run --command=cat "$APP_ID" /app/share/pycab/build-info || return 1
   echo "Synchronizing Steam host launcher..."
   local launcher_tmp
   mkdir -p "$HOME/.local/bin"
@@ -84,10 +95,12 @@ PY
     rm -f "$launcher_tmp"
     echo "WARNING: Installed Flatpak has no bundled host launcher; keeping existing launcher." >&2
   else
-    chmod 755 "$launcher_tmp"
-    mv -f "$launcher_tmp" "$HOME/.local/bin/pycab-steam"
+    bash -n "$launcher_tmp" || { rm -f "$launcher_tmp"; echo "ERROR: Bundled launcher has invalid Bash syntax." >&2; return 1; }
+    chmod 755 "$launcher_tmp" || return 1
+    mv -f "$launcher_tmp" "$HOME/.local/bin/pycab-steam" || return 1
     echo "Host launcher synchronized."
   fi
+  return 0
 )
 
 while :; do
