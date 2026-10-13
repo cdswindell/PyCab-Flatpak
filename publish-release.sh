@@ -6,13 +6,19 @@ pycab_require_mac
 cd "$ROOT"
 REBUILD=false
 DRY_RUN=false
+FROM_SOURCE=false
 for arg in "$@"; do
   case "$arg" in
     --rebuild) [[ "$REBUILD" == false ]] || { echo "Duplicate --rebuild" >&2; exit 2; }; REBUILD=true ;;
+    --from-source) [[ "$FROM_SOURCE" == false ]] || { echo "Duplicate --from-source" >&2; exit 2; }; FROM_SOURCE=true ;;
     --dry-run) [[ "$DRY_RUN" == false ]] || { echo "Duplicate --dry-run" >&2; exit 2; }; DRY_RUN=true ;;
-    *) echo "Usage: $0 [--rebuild] [--dry-run]" >&2; exit 2 ;;
+    *) echo "Usage: $0 [--rebuild] [--from-source] [--dry-run]" >&2; exit 2 ;;
   esac
 done
+if [[ "$FROM_SOURCE" == true && "$REBUILD" != true ]]; then
+  echo "ERROR: --from-source requires --rebuild." >&2
+  exit 2
+fi
 for tool in git gh curl python3; do
   command -v "$tool" >/dev/null || { echo "Missing required tool: $tool" >&2; exit 1; }
 done
@@ -104,9 +110,14 @@ else
   fi
 fi
 
+if [[ "$FROM_SOURCE" == true ]]; then
+  SOURCE_SHA="$(gh api repos/cdswindell/PyLegacy/commits/master --jq .sha)"
+  [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "ERROR: Could not resolve PyLegacy master." >&2; exit 1; }
+  echo "Source rebuild will package PyLegacy master at $SOURCE_SHA (not PyPI)."
+fi
 git --no-pager diff -- requirements-lock.txt
 if [[ "$DRY_RUN" == true ]]; then
-  echo "DRY RUN: Would publish PyCab $TAG using PyTrain $VERSION."
+  echo "DRY RUN: Would publish PyCab $TAG using PyTrain $VERSION (from source: $FROM_SOURCE)."
   echo "DRY RUN: Would require clean, synchronized master; commit any updated lock; push the release tag."
   exit 0
 fi
@@ -120,7 +131,11 @@ if ! git diff --quiet -- requirements-lock.txt; then
   git commit -m "Lock PyCab dependencies for PyTrain $VERSION"
   git push origin master
 fi
-git tag "$TAG"
+if [[ "$FROM_SOURCE" == true ]]; then
+  git tag -a "$TAG" -m "PyCab $TAG" -m "PyLegacy-Source: $SOURCE_SHA"
+else
+  git tag "$TAG"
+fi
 git push origin "$TAG"
 echo "Published tag $TAG. GitHub Actions will build and attach the Flatpak."
 echo "gh run list --repo cdswindell/PyCab-Flatpak --workflow release.yml --limit 5"
