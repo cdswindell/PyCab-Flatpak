@@ -91,6 +91,7 @@ jobs:
         if: steps.version.outputs.ready == 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
@@ -111,4 +112,4 @@ jobs:
           fi
           git tag "v$VERSION"
           git push origin "v$VERSION"
-          echo "Pushed PyCab v$VERSION; release.yml will build and publish the Flatpak."
+          # Tags pushed with GITHUB_TOKEN do not trigger push workflows.\n          # Dispatch release.yml explicitly against the new tag.\n          gh workflow run release.yml --ref "v$VERSION"\n          echo "Pushed PyCab v$VERSION and dispatched release.yml."
