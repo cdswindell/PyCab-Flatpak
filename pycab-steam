@@ -8,6 +8,8 @@ if [[ "${LD_PRELOAD:-}" == *gameoverlayrenderer.so* ]]; then
   unset LD_PRELOAD
 fi
 APP_ID=io.github.cdswindell.PyCab
+# Slider touchscreen diagnostics (set to 1 to enable event tracing).
+PYTRAIN_SLIDER_TRACE="${PYTRAIN_SLIDER_TRACE:-0}"
 REQUEST="$HOME/.var/app/$APP_ID/data/pycab-update-request"
 LOG_DIR="$HOME/.var/app/$APP_ID/data/runtime"
 UPDATE_LOG="$LOG_DIR/pycab-update.log"
@@ -104,7 +106,7 @@ PY
 )
 
 while :; do
-  /usr/bin/flatpak run "$APP_ID" "$@"
+  /usr/bin/flatpak run --env=PYTRAIN_SLIDER_TRACE="$PYTRAIN_SLIDER_TRACE" "$APP_ID" "$@"
   status=$?
   if [ "$status" -ne 42 ]; then
     # A normal Quit must never leave a pending update for a later session.
