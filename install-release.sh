@@ -135,3 +135,8 @@ else
   echo "Steam shortcut verification deferred until Steam exits."
 fi
 echo "Installed. Launch in Steam Gaming Mode or a local Deck desktop console."
+echo
+echo "IMPORTANT: In Steam Gaming Mode, open PyCab > Properties > Controller"
+echo "and set Steam Input to DISABLED. This prevents touchscreen buttons and"
+echo "sliders from sticking; PyCab physical controls work without Steam Input."
+echo "Steam Input is a per-shortcut Steam setting and cannot be set by Flatpak."
