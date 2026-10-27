@@ -126,7 +126,9 @@ This also verifies the checksum, installs the Flatpak, creates the shortcut, and
 
 Restart Steam in Desktop Mode, or choose **Return to Gaming Mode**. Open **Library > Non-Steam > PyCab**. Its artwork and shortcut should already be present; **do not manually add a second shortcut**.
 
-Select **Play**. If Deck controls do not work, open **PyCab > Properties > Controller** and enable **Steam Input**. The shortcut's target should be `/home/deck/.local/bin/pycab-steam`, not `/usr/bin/flatpak`. The host launcher avoids the white Tk window observed with direct Flatpak launching from Steam.
+Before selecting **Play**, open **PyCab > Properties > Controller** and set **Steam Input** to **Disable Steam Input**. Steam Input can interfere with touchscreen button releases and slider dragging in Gaming Mode; PyCab's physical joysticks, triggers, and buttons work without it. The installer cannot change this Steam per-shortcut setting automatically.
+
+Then select **Play**. The shortcut's target should be `/home/deck/.local/bin/pycab-steam`, not `/usr/bin/flatpak`. The host launcher avoids the white Tk window observed with direct Flatpak launching from Steam.
 
 For a separate graphical Desktop Mode test (not over SSH), run:
 
@@ -195,7 +197,7 @@ features work from persistent Flatpak storage.
 - **Checksum verification fails:** Do not bypass it. Download a fresh ZIP and rerun the installer.
 - **Missing Flatpak runtime:** Check `flatpak remotes`, configure Flathub as shown in section 4, and retry.
 - **GUI works in Konsole but is white in Steam:** Verify the shortcut's **Target** is `/home/deck/.local/bin/pycab-steam`.
-- **Controls do not respond:** Enable **Steam Input** under PyCab's Controller properties and relaunch.
+- **Touchscreen buttons stick or sliders drag unexpectedly:** In Gaming Mode, set **PyCab > Properties > Controller > Disable Steam Input** and relaunch. PyCab's physical controls continue to work without Steam Input.
 - **Cannot connect to PyTrain:** Check server/Base 3 reachability and Wi-Fi isolation; try a direct IP if discovery is blocked.
 - **SSH connection refused:** Check `systemctl is-active sshd` and the Deck's current IP address.
 - **Logs:** Run `flatpak run io.github.cdswindell.PyCab` from the Deck's graphical Konsole.
