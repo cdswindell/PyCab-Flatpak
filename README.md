@@ -35,13 +35,15 @@ Installing a published release does **not** build Python, Tcl/Tk, or PyTrain.
    cd PyCab-Flatpak
    ./install-release.sh
    ```
-7. When installation finishes, double-click **Return to Gaming Mode** on the desktop. In Gaming Mode, open **STEAM > Library > Non-Steam** and look for the **PyCab** icon. Select **PyCab**, then **Play**.
+7. When installation finishes, double-click **Return to Gaming Mode** on the desktop. In Gaming Mode, open **STEAM > Library > Non-Steam** and look for the **PyCab** icon.
+8. Before launching PyCab, open its **Properties > Controller** settings and select **Disable Steam Input**. PyCab reads the Deck's physical controls directly; Steam Input can interfere with touchscreen button releases and slider dragging.
+9. Select **PyCab**, then **Play**.
 
 For more detail, see [the Steam Deck installation guide](INSTALL_STEAM_DECK.md#1-prepare-the-deck).
 
 The script fetches the **latest published GitHub release**, verifies its Flatpak checksum, installs the user Flatpak and host launcher, creates the PyCab non-Steam shortcut, and installs custom Steam artwork. It backs up Steam's shortcuts file and preserves other shortcuts. If Steam is still running, shortcut creation is deferred until you exit Steam and run the command printed by the installer.
 
-Restart Steam or return to Gaming Mode, open **Library > Non-Steam > PyCab**, and select **Play**. Enable Steam Input under **Properties > Controller** if needed. See [INSTALL_STEAM_DECK.md](INSTALL_STEAM_DECK.md) for complete setup, SSH, and client/server options.
+Restart Steam or return to Gaming Mode, open **Library > Non-Steam > PyCab**, set **Properties > Controller > Disable Steam Input**, and select **Play**. The Flatpak installer cannot change Steam's per-shortcut controller setting. See [INSTALL_STEAM_DECK.md](INSTALL_STEAM_DECK.md) for complete setup, SSH, and client/server options.
 
 **Do not use `/usr/bin/flatpak` as the Steam shortcut target.** The installer configures `~/.local/bin/pycab-steam` to avoid a white Tk window seen with direct Flatpak launches from Steam.
 
